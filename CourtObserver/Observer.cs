@@ -6,22 +6,26 @@ using OpenQA.Selenium.Support.UI;
 
 namespace CourtObserver
 {
-    public enum Court
-    {
-        Takara,
-        Okazaki,
-    }
-
     public class Observer : IDisposable
     {
         // 対象のURL
         private const string URL = "https://g-kyoto.pref.kyoto.lg.jp/reserve_j/core_i/init.asp?SBT=1";
+
+        // 予約可能時間
+        public const int START_HOUR = 8;
+        public const int END_HOUR = 21;
+        public const int HOURS_COUNT = END_HOUR - START_HOUR;
 
         // 待機時間の余裕（最小で 10）
         private const int WAIT_RATE = 10;
 
         private readonly ChromeDriver driver;
         private ChromeDriver inner;
+
+        /// <summary>
+        /// 取得中のコートです。
+        /// </summary>
+        public Court Court { get; private set; }
 
         /// <summary>
         /// 取得した空き状況です。
@@ -33,10 +37,11 @@ namespace CourtObserver
         /// </summary>
         public bool Cancel { get; set; }
 
-        public Observer()
+        public Observer(Court court)
         {
             driver = inner = new ChromeDriver();
             CourtCalendar = new CourtCalendar();
+            Court = court;
         }
 
         public void Dispose()
@@ -101,37 +106,48 @@ namespace CourtObserver
         /// <summary>
         /// 指定したコートの今後2週間の情報を表示するページまで遷移します。
         /// </summary>
-        public void Initialize(Court court)
+        public void Initialize()
         {
-            // URLへ遷移
-            driver.Navigate().GoToUrl(URL);
-            Sleep(200);
+            try
+            {
+                // URLへ遷移
+                driver.Navigate().GoToUrl(URL);
+                Sleep(200);
 
-            var frame = driver.FindElement(By.Name("MainFrame"));
-            inner = (ChromeDriver)driver.SwitchTo().Frame(frame);
+                var frame = driver.FindElement(By.Name("MainFrame"));
+                inner = (ChromeDriver)driver.SwitchTo().Frame(frame);
 
-            inner.ExecuteScript(@"cmdMokuteki_click('100040', 'テニス');");
-            Sleep(200);
-            inner.ExecuteScript(@"cmdSelect_click('00000', '京都市');");
-            Sleep(50);
-            // 検索ボタンをクリック
-            driver.FindElement(By.Name("btn_next")).Click();
-            Sleep(200);
-            // 施設を選択
-            var value = GetLocationValue(court);
-            inner.ExecuteScript(@$"cmdYoyaku_click('{value.Item1}','{value.Item2}');");
-            Sleep(200);
-            // 2週間表示にする
-            driver.FindElement(By.Id("radio1")).Click();
-            Sleep(10);
-            // アラートを閉じる
-            driver.SwitchTo().Alert().Accept();
-            Sleep(1000);
-            // 「テニスコート」を選択
-            var selectShisetu = new SelectElement(driver.FindElement(By.Name("lst_shisetu")));
-            selectShisetu.SelectByIndex(GetTennisCourtIndex(court));
-            Sleep(1000);
-            UpdateCalendar();
+                inner.ExecuteScript(@"cmdMokuteki_click('100040', 'テニス');");
+                Sleep(200);
+                inner.ExecuteScript(@"cmdSelect_click('00000', '京都市');");
+                Sleep(50);
+                // 検索ボタンをクリック
+                driver.FindElement(By.Name("btn_next")).Click();
+                Sleep(200);
+                // 施設を選択
+                var value = GetLocationValue(Court);
+                inner.ExecuteScript(@$"cmdYoyaku_click('{value.Item1}','{value.Item2}');");
+                Sleep(200);
+                // 2週間表示にする
+                driver.FindElement(By.Id("radio1")).Click();
+                Sleep(10);
+                // アラートを閉じる
+                driver.SwitchTo().Alert().Accept();
+                Sleep(1000);
+                // 「テニスコート」を選択
+                var selectShisetu = new SelectElement(driver.FindElement(By.Name("lst_shisetu")));
+                selectShisetu.SelectByIndex(GetTennisCourtIndex(Court));
+                Sleep(1000);
+                UpdateCalendar();
+            }
+            catch (NoSuchElementException e)
+            {
+                Console.WriteLine(e.ToString());
+                Console.WriteLine();
+                Console.WriteLine("要素が見つかりませんでした。ページを再度初期化します。");
+                Console.WriteLine();
+                Initialize();
+            }
         }
 
         /// <summary>
@@ -151,12 +167,32 @@ namespace CourtObserver
                     today = DateTime.Today;
                 }
 
-                date = date.AddDays(14);
-                UpdateTwoWeeksSince(date);
-                date = date.AddDays(14);
-                UpdateTwoWeeksSince(date);
-                date = DateOnly.FromDateTime(today);
-                UpdateTwoWeeksSince(date);
+                try
+                {
+                    // 抽選予約、または期間外になるまで取得を続ける
+                    while (true)
+                    {
+                        var lastState = CourtCalendar.GetValue(date.AddDays(13), 13);
+                        if (lastState == CourtState.Lottery || lastState == CourtState.OutOfDate)
+                        {
+                            break;
+                        }
+                        date = date.AddDays(14);
+                        UpdateTwoWeeksSince(date);
+                    }
+                    date = DateOnly.FromDateTime(today);
+                    UpdateTwoWeeksSince(date);
+                }
+                catch (NoSuchElementException e)
+                {
+                    Console.WriteLine(e.ToString());
+                    Console.WriteLine();
+                    Console.WriteLine("要素が見つかりませんでした。ページを初期化します。");
+                    Console.WriteLine();
+                    Initialize();
+                    date = DateOnly.FromDateTime(today);
+                    continue;
+                }
 
                 Sleep(15000);
             }
@@ -181,23 +217,33 @@ namespace CourtObserver
             {
                 var header = inner.FindElement(By.Id($"Day_{i}"));
                 var date = ParseDate(header.Text);
-                // 8 時からの各時間を確認
-                int time = 8;
+                // START_HOUR 時からの各時間を確認
+                int time = START_HOUR;
                 var td = header.FindElement(By.XPath(@"following-sibling::td"));
                 while (true)
                 {
                     int hours = int.Parse(td.GetAttribute("colspan")) / 4;
-                    var available = td.FindElement(By.XPath(@"a/img")).GetAttribute("alt") == "予約可能";
+                    // 受付期間外のときは、a タグは存在しない
+                    IWebElement img;
+                    try
+                    {
+                        img = td.FindElement(By.XPath(@"a/img"));
+                    }
+                    catch (NoSuchElementException)
+                    {
+                        img = td.FindElement(By.XPath("img"));
+                    }
+                    var state = img.GetAttribute("alt");
                     for (int j = 0; j < hours; j++)
                     {
-                        CourtCalendar.SetValue(date, time + j, available);
+                        CourtCalendar.SetValue(date, time + j, ParseCourtState(state));
                     }
                     time += hours;
                     try
                     {
                         td = td.FindElement(By.XPath(@"following-sibling::td"));
                     }
-                    catch (Exception)
+                    catch (NoSuchElementException)
                     {
                         break;
                     }
@@ -206,16 +252,31 @@ namespace CourtObserver
         }
 
         /// <summary>
+        /// "予約可能" などの文字列を CourtState 型にパースします。
+        /// </summary>
+        private static CourtState ParseCourtState(string str)
+        {
+            return str switch
+            {
+                "予約可能" => CourtState.Empty,
+                "予約不可" => CourtState.Reserved,
+                "予約受付期間外" => CourtState.OutOfDate,
+                "抽選予約可能" => CourtState.Lottery,
+                "休館・点検" => CourtState.Closed,
+                _ => CourtState.Unknown,
+            };
+        }
+
+        /// <summary>
         /// "10月2日（土）" などの文字列を DateOnly 型にパースします。
         /// </summary>
         private static DateOnly ParseDate(string str)
         {
-            var dayOfWeekString = new List<string>() { "日", "月", "火", "水", "木", "金", "土" };
 
             var match = Regex.Match(str, @"(\d+)月(\d+)日（(.)）");
             var month = int.Parse(match.Groups[1].Value);
             var day = int.Parse(match.Groups[2].Value);
-            var dayOfWeek = (DayOfWeek)dayOfWeekString.IndexOf(match.Groups[3].Value);
+            var dayOfWeek = (DayOfWeek)Util.DayOfWeekString.IndexOf(match.Groups[3].Value);
             var thisYear = DateTime.Today.Year;
 
             // 2/29 なら閏年の年を採用

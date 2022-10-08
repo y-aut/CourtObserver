@@ -1,0 +1,17 @@
+{
+	"blocks": [
+		{
+			"type": "section",
+			"text": {
+				"type": "plain_text",
+				"text": "%TEXT%",
+				"emoji": true
+			}
+		},
+		{
+			"type": "image",
+			"image_url": "%IMAGE%",
+			"alt_text": "calendar"
+		}
+	]
+}

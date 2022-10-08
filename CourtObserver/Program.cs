@@ -8,15 +8,15 @@
         private static List<Observer>? observers;
         private static bool flgCancel = false;
 
+        // 監視するコート
+        private static readonly Court[] courts = { Court.Takara, Court.Okazaki };
+
         public static void Main()
         {
-            // 監視するコート
-            Court[] courts = { Court.Takara, Court.Okazaki };
-
             observers = new List<Observer>();
             for (int i = 0; i < courts.Length; i++)
             {
-                observers.Add(new Observer());
+                observers.Add(new Observer(courts[i]));
             }
 
             Console.WriteLine("取得を開始します。Esc キーで終了します。");
@@ -32,7 +32,7 @@
                 {
                     try
                     {
-                        obs.Initialize(court);
+                        obs.Initialize();
                         obs.Loop();
                     }
                     catch (TaskCanceledException)
@@ -70,9 +70,16 @@
             {
                 Sleep(15000);
                 if (flgCancel) return;
-                
-                // Twitter にアップロード
+                if (observers == null) continue;
 
+                for (int i = 0; i < observers.Count; i++)
+                {
+                    using var img = Drawer.DrawCalendar(observers[i].CourtCalendar);
+                    img.Save($"image_{i}.png");
+                    Slack.SendTextImageAsync(
+                        $"{courts[i].ToDisplayString()}の空き状況をお知らせします。:tennis:",
+                        $"image_{i}.png").Wait();
+                }
             }
         }
 
