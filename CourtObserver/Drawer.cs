@@ -8,9 +8,9 @@ namespace CourtObserver
     public static class Drawer
     {
         // 定数
-        private const int CELL_WIDTH = 60;
+        private const int CELL_WIDTH = 80;
         private const int CELL_HEIGHT = 60;
-        private const int ROW_HEADER_WIDTH = 300;
+        private const int ROW_HEADER_WIDTH = 310;
         private const int COL_HEADER_HEIGHT = CELL_HEIGHT;
 
         /// <summary>
@@ -37,24 +37,56 @@ namespace CourtObserver
             using Graphics g = Graphics.FromImage(bmp);
 
             // 背景色
-            g.Clear(Color.White);
-            for (int i = 0; i < days; i += 2)
+            g.Clear(Color.LemonChiffon);
+            for (int i = 0; i < days; i++)
             {
-                g.FillRectangle(Brushes.LightSkyBlue, new Rectangle(
-                    0, COL_HEADER_HEIGHT + CELL_HEIGHT * i, bmp.Width, CELL_HEIGHT));
+                var date = today.AddDays(i);
+
+                Brush? brush;
+                if (date.DayOfWeek == DayOfWeek.Saturday)
+                {
+                    brush = Brushes.PaleTurquoise;
+                }
+                else if (date.DayOfWeek == DayOfWeek.Sunday || CourtCalendar.Holidays.Contains(date))
+                {
+                    brush = Brushes.Pink;
+                }
+                else
+                {
+                    brush = null;
+                }
+
+                if (brush != null)
+                {
+                    g.FillRectangle(brush, new Rectangle(
+                        0, COL_HEADER_HEIGHT + CELL_HEIGHT * i, bmp.Width, CELL_HEIGHT));
+                }
             }
 
             // 罫線
-            var pen = new Pen(Color.SkyBlue, 3);
+            var pen = new Pen(Color.Plum, 3);
+            // 横
             for (int i = 0; i < days; i++)
             {
                 g.DrawLine(pen, 0, COL_HEADER_HEIGHT + CELL_HEIGHT * i,
                     bmp.Width, COL_HEADER_HEIGHT + CELL_HEIGHT * i);
             }
+            // 縦
+            int[] primaryHour = { 8, 10, 12, 14, 16, 18 };
             for (int i = 0; i < Observer.HOURS_COUNT; i++)
             {
-                g.DrawLine(pen, ROW_HEADER_WIDTH + CELL_WIDTH * i, 0,
-                    ROW_HEADER_WIDTH + CELL_WIDTH * i, bmp.Height);
+                if (primaryHour.Contains(Observer.START_HOUR + i))
+                {
+                    // 下まで引く
+                    g.DrawLine(pen, ROW_HEADER_WIDTH + CELL_WIDTH * i, 0,
+                        ROW_HEADER_WIDTH + CELL_WIDTH * i, bmp.Height);
+                }
+                else
+                {
+                    // 初日まで引く
+                    g.DrawLine(pen, ROW_HEADER_WIDTH + CELL_WIDTH * i, 0,
+                        ROW_HEADER_WIDTH + CELL_WIDTH * i, COL_HEADER_HEIGHT + CELL_HEIGHT);
+                }
             }
 
             // ヘッダの文字

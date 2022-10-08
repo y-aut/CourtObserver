@@ -217,6 +217,16 @@ namespace CourtObserver
             {
                 var header = inner.FindElement(By.Id($"Day_{i}"));
                 var date = ParseDate(header.Text);
+                if (date.DayOfWeek != DayOfWeek.Saturday && date.DayOfWeek != DayOfWeek.Sunday &&
+                    !CourtCalendar.Holidays.Contains(date))
+                {
+                    // 背景色を取得
+                    var color = header.GetAttribute("bgcolor");
+                    if (color == "#ffcccc")
+                    {
+                        CourtCalendar.Holidays.Add(date);
+                    }
+                }
                 // START_HOUR 時からの各時間を確認
                 int time = START_HOUR;
                 var td = header.FindElement(By.XPath(@"following-sibling::td"));

@@ -1,4 +1,6 @@
-﻿namespace CourtObserver
+﻿using System.Drawing.Imaging;
+
+namespace CourtObserver
 {
     public static class Program
     {

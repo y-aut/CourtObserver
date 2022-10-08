@@ -11,6 +11,11 @@ namespace CourtObserver
     /// </summary>
     public class CourtCalendar
     {
+        /// <summary>
+        /// 日曜日でない祝日を保存しておくリストです。
+        /// </summary>
+        public static List<DateOnly> Holidays { get; private set; } = new List<DateOnly>();
+
         private Dictionary<(DateOnly date, int hour), CourtState> data;
 
         public CourtCalendar()
