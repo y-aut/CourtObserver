@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 
 namespace COLib
 {
@@ -10,6 +11,7 @@ namespace COLib
         /// <summary>
         /// ユーザー ID です。10桁の半角英数字で表されます。
         /// </summary>
+        [JsonPropertyName("id")]
         public string ID { get; set; }
 
         /// <summary>
@@ -29,7 +31,7 @@ namespace COLib
         /// </summary>
         public static bool IsValidID(string id)
         {
-            return Regex.IsMatch(id, "^[0-9A-Z]{10}$");
+            return Regex.IsMatch(id, "^[0-9A-Z]{3,20}$");
         }
     }
 }

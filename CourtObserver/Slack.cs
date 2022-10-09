@@ -1,7 +1,4 @@
-﻿using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+﻿using COLib;
 
 namespace CourtObserver
 {
@@ -54,6 +51,16 @@ namespace CourtObserver
             {
                 Console.WriteLine(response);
             }
+        }
+
+        /// <summary>
+        /// メンション付きテキストを送信します。
+        /// </summary>
+        /// <param name="text">送信するテキスト。</param>
+        /// <param name="users">メンションするユーザー。</param>
+        public static async Task SendTextAsync(string text, IEnumerable<SlackUser> users)
+        {
+            await SendTextAsync(string.Join(" ", users.Select(i => $"<@{i.ID}>")) + " " + text);
         }
 
         /// <summary>

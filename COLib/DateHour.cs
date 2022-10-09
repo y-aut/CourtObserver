@@ -33,6 +33,14 @@
         }
 
         /// <summary>
+        /// API の通信用文字列に変換します。
+        /// </summary>
+        public string ToApiString()
+        {
+            return Date.ToString("yyyy-MM-dd") + "-" + Hour.ToString();
+        }
+
+        /// <summary>
         /// "2022-10-3-16" などの文字列を日付 (2022/10/3) と時刻 (16:00) にパースします。
         /// </summary>
         public static bool TryParse(string str, out DateHour result)

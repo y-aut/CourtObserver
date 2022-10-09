@@ -15,7 +15,6 @@ namespace CourtObserver
         // 予約可能時間
         public const int START_HOUR = 8;
         public const int END_HOUR = 21;
-        public const int HOURS_COUNT = END_HOUR - START_HOUR;
 
         // 待機時間の余裕（最小で 10）
         private const int WAIT_RATE = 10;
@@ -38,10 +37,17 @@ namespace CourtObserver
         /// </summary>
         public bool Cancel { get; set; }
 
+        /// <summary>
+        /// コート状況の変更を検知したときに発生するイベントです。
+        /// 現在の画面の取得処理の終わりに発生します。
+        /// 引数は、値が更新された日付と、変更前の値をペアにもつ CourtCalendar オブジェクトです。
+        /// </summary>
+        public event EventHandler<CourtCalendar> CourtStateChanged = delegate { };
+
         public Observer(Court court)
         {
             driver = inner = new ChromeDriver();
-            CourtCalendar = new CourtCalendar();
+            CourtCalendar = new CourtCalendar(court);
             Court = court;
         }
 
@@ -214,6 +220,8 @@ namespace CourtObserver
         /// </summary>
         private void UpdateCalendar()
         {
+            CourtCalendar? changed = null;
+
             for (int i = 0; i < 14; i++)
             {
                 var header = inner.FindElement(By.Id($"Day_{i}"));
@@ -244,10 +252,20 @@ namespace CourtObserver
                     {
                         img = td.FindElement(By.XPath("img"));
                     }
-                    var state = img.GetAttribute("alt");
+                    var state = ParseCourtState(img.GetAttribute("alt"));
                     for (int j = 0; j < hours; j++)
                     {
-                        CourtCalendar.SetValue(new DateHour(date, time + j), ParseCourtState(state));
+                        // 値が変更されたかを確認する
+                        var old = CourtCalendar.GetValue(new DateHour(date, time + j));
+                        if (old != null && old != state)
+                        {
+                            if (changed == null)
+                            {
+                                changed = new CourtCalendar(Court);
+                            }
+                            changed.SetValue(new DateHour(date, time + j), old.Value);
+                        }
+                        CourtCalendar.SetValue(new DateHour(date, time + j), state);
                     }
                     time += hours;
                     try
@@ -259,6 +277,11 @@ namespace CourtObserver
                         break;
                     }
                 }
+            }
+
+            if (changed != null)
+            {
+                CourtStateChanged(this, changed);
             }
         }
 

@@ -13,10 +13,21 @@ namespace CourtObserver
         public static List<DateOnly> Holidays { get; private set; } = new List<DateOnly>();
 
         private readonly Dictionary<DateHour, CourtState> data;
+        public Court Court { get; private set; }
 
-        public CourtCalendar()
+        public CourtCalendar(Court court)
         {
             data = new();
+            Court = court;
+        }
+
+        /// <summary>
+        /// CourtCalendar オブジェクトの値をコピーしてインスタンスを作成します。
+        /// </summary>
+        public CourtCalendar(CourtCalendar src)
+        {
+            data = new(src.data);
+            Court = src.Court;
         }
 
         /// <summary>
@@ -57,6 +68,22 @@ namespace CourtObserver
                     data.Remove(key);
                 }
             }
+        }
+
+        /// <summary>
+        /// 全てのデータを削除します。
+        /// </summary>
+        public void Clear()
+        {
+            data.Clear();
+        }
+
+        /// <summary>
+        /// 日時のリストを取得します。
+        /// </summary>
+        public Dictionary<DateHour, CourtState>.KeyCollection GetDates()
+        {
+            return data.Keys;
         }
     }
 }
