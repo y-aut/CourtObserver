@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using COLib;
+using System.Drawing;
 
 namespace CourtObserver
 {
@@ -23,7 +24,7 @@ namespace CourtObserver
             DateOnly today = DateOnly.FromDateTime(DateTime.Today);
             for (int i = 0; ; i++)
             {
-                var state = calendar.GetValue(today.AddDays(i), 12);
+                var state = calendar.GetValue(new DateHour(today.AddDays(i), 12));
                 if (state == null || state == CourtState.Lottery || state == CourtState.OutOfDate)
                 {
                     days = i;
@@ -111,14 +112,14 @@ namespace CourtObserver
             // 当日のみ 1時間おき
             for (int hour = Observer.START_HOUR; hour < Observer.END_HOUR; hour++)
             {
-                DrawCourtState(g, GetCell(0, hour, 1), calendar.GetValue(today, hour));
+                DrawCourtState(g, GetCell(0, hour, 1), calendar.GetValue(new DateHour(today, hour)));
             }
 
             for (int i = 1; i < days; i++)
             {
                 for (int hour = Observer.START_HOUR; hour < Observer.END_HOUR - 2; hour += 2)
                 {
-                    DrawCourtState(g, GetCell(i, hour, hour == 18 ? 3 : 2), calendar.GetValue(today.AddDays(i), hour));
+                    DrawCourtState(g, GetCell(i, hour, hour == 18 ? 3 : 2), calendar.GetValue(new DateHour(today.AddDays(i), hour)));
                 }
             }
 

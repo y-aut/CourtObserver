@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using COLib;
 
 namespace CourtObserver
 {
@@ -16,7 +12,7 @@ namespace CourtObserver
         /// </summary>
         public static List<DateOnly> Holidays { get; private set; } = new List<DateOnly>();
 
-        private Dictionary<(DateOnly date, int hour), CourtState> data;
+        private readonly Dictionary<DateHour, CourtState> data;
 
         public CourtCalendar()
         {
@@ -24,28 +20,28 @@ namespace CourtObserver
         }
 
         /// <summary>
-        /// date 日の hour 時からが空いているかどうかを示す値を取得します。
+        /// 指定した時刻が空いているかどうかを示す値を取得します。
         /// 取得ができていない場合は、null が返されます。
         /// </summary>
-        public CourtState? GetValue(DateOnly date, int hour)
+        public CourtState? GetValue(DateHour date)
         {
-            if (!data.ContainsKey((date, hour)))
+            if (!data.ContainsKey(date))
             {
                 return null;
             }
-            return data[(date, hour)];
+            return data[date];
         }
 
         /// <summary>
-        /// date 日の hour 時からが空いているかどうかを示す値を設定します。
+        /// 指定した時刻が空いているかどうかを示す値を設定します。
         /// </summary>
-        public void SetValue(DateOnly date, int hour, CourtState value)
+        public void SetValue(DateHour date, CourtState value)
         {
-            if (!data.ContainsKey((date, hour)))
+            if (!data.ContainsKey(date))
             {
-                data.Add((date, hour), value);
+                data.Add(date, value);
             }
-            data[(date, hour)] = value;
+            data[date] = value;
         }
 
         /// <summary>
@@ -56,7 +52,7 @@ namespace CourtObserver
             var today = DateOnly.FromDateTime(DateTime.Today);
             foreach (var key in data.Keys)
             {
-                if (key.date < today)
+                if (key.Date < today)
                 {
                     data.Remove(key);
                 }

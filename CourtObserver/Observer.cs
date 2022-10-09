@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Text.RegularExpressions;
+using COLib;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
@@ -172,7 +173,7 @@ namespace CourtObserver
                     // 抽選予約、または期間外になるまで取得を続ける
                     while (true)
                     {
-                        var lastState = CourtCalendar.GetValue(date.AddDays(13), 13);
+                        var lastState = CourtCalendar.GetValue(new DateHour(date.AddDays(13), 12));
                         if (lastState == CourtState.Lottery || lastState == CourtState.OutOfDate)
                         {
                             break;
@@ -246,7 +247,7 @@ namespace CourtObserver
                     var state = img.GetAttribute("alt");
                     for (int j = 0; j < hours; j++)
                     {
-                        CourtCalendar.SetValue(date, time + j, ParseCourtState(state));
+                        CourtCalendar.SetValue(new DateHour(date, time + j), ParseCourtState(state));
                     }
                     time += hours;
                     try
