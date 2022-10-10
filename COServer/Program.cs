@@ -14,6 +14,7 @@ builder.Services.AddSwaggerGen(option => {
 });
 
 var app = builder.Build();
+COServer.Util.Logger = app.Logger;
 
 // Configure the HTTP request pipeline.
 //if (app.Environment.IsDevelopment())

@@ -9,6 +9,11 @@
         {
             return date.ToString("yyyyMMdd");
         }
+
+        public static string ToApiString(this DateOnly date)
+        {
+            return date.ToString("yyyy-MM-dd");
+        }
     }
 
     /// <summary>
@@ -37,7 +42,7 @@
         /// </summary>
         public string ToApiString()
         {
-            return Date.ToString("yyyy-MM-dd") + "-" + Hour.ToString();
+            return Date.ToApiString() + "-" + Hour.ToString();
         }
 
         /// <summary>

@@ -33,7 +33,7 @@ namespace CourtObserver
                 }
             }
 
-            var bmp = new Bitmap(GetCellX(Observer.END_HOUR), GetCellY(days));
+            var bmp = new Bitmap(GetCellX(Const.END_HOUR), GetCellY(days));
             using Graphics g = Graphics.FromImage(bmp);
 
             // 背景色
@@ -72,10 +72,9 @@ namespace CourtObserver
                 g.DrawLine(pen, 0, GetCellY(i), bmp.Width, GetCellY(i));
             }
             // 縦
-            int[] primaryHour = { 8, 10, 12, 14, 16, 18 };
-            for (int i = Observer.START_HOUR; i < Observer.END_HOUR; i++)
+            for (int i = Const.START_HOUR; i < Const.END_HOUR; i++)
             {
-                if (primaryHour.Contains(i))
+                if (Const.PRIMARY_HOUR.Contains(i))
                 {
                     // 下まで引く
                     g.DrawLine(pen, GetCellX(i), TOP_HEADER_HEIGHT, GetCellX(i), bmp.Height);
@@ -101,7 +100,7 @@ namespace CourtObserver
             {
                 g.DrawString(today.AddDays(i).ToDisplayString(), font, Brushes.Black, GetRowHeader(i), format);
             }
-            for (int i = Observer.START_HOUR; i < Observer.END_HOUR; i++)
+            for (int i = Const.START_HOUR; i < Const.END_HOUR; i++)
             {
                 g.DrawString(i.ToString(), font, Brushes.Black, GetColHeader(i), format);
             }
@@ -109,16 +108,17 @@ namespace CourtObserver
             // 空き状況
 
             // 当日のみ 1時間おき
-            for (int hour = Observer.START_HOUR; hour < Observer.END_HOUR; hour++)
+            for (int hour = Const.START_HOUR; hour < Const.END_HOUR; hour++)
             {
                 DrawCourtState(g, GetCell(0, hour, 1), calendar.GetValue(new DateHour(today, hour)));
             }
 
             for (int i = 1; i < days; i++)
             {
-                for (int hour = Observer.START_HOUR; hour < Observer.END_HOUR - 2; hour += 2)
+                for (int j = 0; j < Const.PRIMARY_HOUR.Length; j++)
                 {
-                    DrawCourtState(g, GetCell(i, hour, hour == 18 ? 3 : 2), calendar.GetValue(new DateHour(today.AddDays(i), hour)));
+                    DrawCourtState(g, GetCell(i, Const.PRIMARY_HOUR[j], Const.PRIMARY_HOUR_SPAN[j]),
+                        calendar.GetValue(new DateHour(today.AddDays(i), Const.PRIMARY_HOUR[j])));
                 }
             }
 
@@ -131,7 +131,7 @@ namespace CourtObserver
         /// <param name="hour">始まりの時刻。</param>
         private static int GetCellX(int hour)
         {
-            return ROW_HEADER_WIDTH + CELL_WIDTH * (hour - Observer.START_HOUR);
+            return ROW_HEADER_WIDTH + CELL_WIDTH * (hour - Const.START_HOUR);
         }
 
         /// <summary>

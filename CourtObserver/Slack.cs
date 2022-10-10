@@ -2,7 +2,7 @@
 
 namespace CourtObserver
 {
-    public class Slack
+    public static class Slack
     {
         /// <summary>
         /// ファイルアップロード用の URL です。
@@ -13,11 +13,6 @@ namespace CourtObserver
         /// メッセージ送信用の URL です。
         /// </summary>
         const string POSTMESSAGE_URL = @"https://slack.com/api/chat.postMessage";
-
-        /// <summary>
-        /// Slack App の Bot Token です。
-        /// </summary>
-        const string TOKEN = @"xoxb-3492638691285-4187297113366-t5XTyeScZmSc6fVn1gMyuvKi";
 
         /// <summary>
         /// メインチャンネルの ID です。
@@ -40,7 +35,7 @@ namespace CourtObserver
             using var httpClient = new HttpClient();
             using var request = new HttpRequestMessage(new HttpMethod("POST"),
                 $"{POSTMESSAGE_URL}?{query}");
-            request.Headers.TryAddWithoutValidation("Authorization", $"Bearer {TOKEN}");
+            request.Headers.TryAddWithoutValidation("Authorization", $"Bearer {Const.TOKEN}");
 
             var response = await httpClient.SendAsync(request);
             if (response.IsSuccessStatusCode)
@@ -71,7 +66,7 @@ namespace CourtObserver
             // curl -F file=@path -F channels=CHANNEL -H "Authorization: Bearer TOKEN" URL
             using var httpClient = new HttpClient();
             using var request = new HttpRequestMessage(new HttpMethod("POST"), UPLOAD_URL);
-            request.Headers.TryAddWithoutValidation("Authorization", $"Bearer {TOKEN}");
+            request.Headers.TryAddWithoutValidation("Authorization", $"Bearer {Const.TOKEN}");
 
             using var multipartContent = new MultipartFormDataContent
             {

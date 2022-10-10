@@ -29,7 +29,7 @@ namespace COServer.Controllers
         {
             if (!DateHour.TryParse(date, out var dateHour))
             {
-                return BadRequest($"{date} is an invalid DateHour string.");
+                return _logger.Warn(BadRequest($"{date} is an invalid DateHour string."));
             }
             try
             {
@@ -37,6 +37,7 @@ namespace COServer.Controllers
             }
             catch (Exception e)
             {
+                _logger.Warn(e);
                 return new ContentResult()
                 {
                     StatusCode = 500,
@@ -56,11 +57,11 @@ namespace COServer.Controllers
         {
             if (!DateHour.TryParse(date, out var dateHour))
             {
-                return BadRequest($"{date} is an invalid DateHour string.");
+                return _logger.Warn(BadRequest($"{date} is an invalid DateHour string."));
             }
             if (!SlackUser.IsValidID(user))
             {
-                return BadRequest($"{user} is an invalid Slack ID string.");
+                return _logger.Warn(BadRequest($"{user} is an invalid Slack ID string."));
             }
             try
             {
@@ -68,6 +69,7 @@ namespace COServer.Controllers
             }
             catch (Exception e)
             {
+                _logger.Warn(e);
                 return new ContentResult()
                 {
                     StatusCode = 500,
@@ -88,11 +90,11 @@ namespace COServer.Controllers
         {
             if (!DateHour.TryParse(date, out var dateHour))
             {
-                return BadRequest($"{date} is an invalid DateHour string.");
+                return _logger.Warn(BadRequest($"{date} is an invalid DateHour string."));
             }
             if (!SlackUser.IsValidID(user))
             {
-                return BadRequest($"{user} is an invalid Slack ID string.");
+                return _logger.Warn(BadRequest($"{user} is an invalid Slack ID string."));
             }
             try
             {
@@ -100,6 +102,7 @@ namespace COServer.Controllers
             }
             catch (Exception e)
             {
+                _logger.Warn(e);
                 return new ContentResult()
                 {
                     StatusCode = 500,
@@ -120,11 +123,11 @@ namespace COServer.Controllers
         {
             if (!DateHour.TryParse(date, out var dateHour))
             {
-                return BadRequest($"{date} is an invalid DateHour string.");
+                return _logger.Warn(BadRequest($"{date} is an invalid DateHour string."));
             }
             if (!SlackUser.IsValidID(user))
             {
-                return BadRequest($"{user} is an invalid Slack ID string.");
+                return _logger.Warn(BadRequest($"{user} is an invalid Slack ID string."));
             }
             try
             {
@@ -132,6 +135,7 @@ namespace COServer.Controllers
             }
             catch (Exception e)
             {
+                _logger.Warn(e);
                 return new ContentResult()
                 {
                     StatusCode = 500,
@@ -151,7 +155,7 @@ namespace COServer.Controllers
         {
             if (!DateHour.TryParse(date, out var dateHour))
             {
-                return BadRequest($"{date} is an invalid DateHour string.");
+                return _logger.Warn(BadRequest($"{date} is an invalid DateHour string."));
             }
             try
             {
@@ -159,6 +163,7 @@ namespace COServer.Controllers
             }
             catch (Exception e)
             {
+                _logger.Warn(e);
                 return new ContentResult()
                 {
                     StatusCode = 500,
@@ -181,6 +186,7 @@ namespace COServer.Controllers
             }
             catch (Exception e)
             {
+                _logger.Warn(e);
                 return new ContentResult()
                 {
                     StatusCode = 500,

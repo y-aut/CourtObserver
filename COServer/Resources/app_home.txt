@@ -1,0 +1,32 @@
+{
+	"type": "home",
+	"blocks": [
+		{
+			"type": "context",
+			"elements": [
+				{
+					"type": "mrkdwn",
+					"text": ":bell: ボタンを押すと、コートが予約可能になった際にメンションしてお知らせします。"
+				}
+			]
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "表示する日付："
+			},
+			"accessory": {
+				"type": "datepicker",
+				"initial_date": "%DATE%",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "日付を選択",
+					"emoji": true
+				},
+				"action_id": "datepicker-action"
+			}
+		}
+		%COURTS%
+	]
+}

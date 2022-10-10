@@ -19,10 +19,6 @@ namespace COLib
         /// </summary>
         public SlackUser(string id)
         {
-            if (!IsValidID(id))
-            {
-                throw new InvalidDataException();
-            }
             ID = id;
         }
 

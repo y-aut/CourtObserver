@@ -1,6 +1,6 @@
 ﻿using COLib;
 
-namespace CourtObserver
+namespace COLib
 {
     /// <summary>
     /// 日付と時間について、空いているかどうかの情報を格納します。

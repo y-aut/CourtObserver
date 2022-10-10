@@ -12,10 +12,6 @@ namespace CourtObserver
         // 対象のURL
         private const string URL = "https://g-kyoto.pref.kyoto.lg.jp/reserve_j/core_i/init.asp?SBT=1";
 
-        // 予約可能時間
-        public const int START_HOUR = 8;
-        public const int END_HOUR = 21;
-
         // 待機時間の余裕（最小で 10）
         private const int WAIT_RATE = 10;
 
@@ -237,7 +233,7 @@ namespace CourtObserver
                     }
                 }
                 // START_HOUR 時からの各時間を確認
-                int time = START_HOUR;
+                int time = Const.START_HOUR;
                 var td = header.FindElement(By.XPath(@"following-sibling::td"));
                 while (true)
                 {
@@ -306,7 +302,6 @@ namespace CourtObserver
         /// </summary>
         private static DateOnly ParseDate(string str)
         {
-
             var match = Regex.Match(str, @"(\d+)月(\d+)日（(.)）");
             var month = int.Parse(match.Groups[1].Value);
             var day = int.Parse(match.Groups[2].Value);

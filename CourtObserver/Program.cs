@@ -1,4 +1,6 @@
-﻿namespace CourtObserver
+﻿using COLib;
+
+namespace CourtObserver
 {
     public static class Program
     {

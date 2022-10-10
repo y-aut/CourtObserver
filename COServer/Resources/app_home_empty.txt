@@ -1,0 +1,20 @@
+﻿,
+{
+	"type": "divider"
+},
+{
+	"type": "section",
+	"text": {
+		"type": "mrkdwn",
+		"text": "%START%:00 - %END%:00 : :o:"
+	}
+},
+{
+	"type": "context",
+	"elements": [
+		{
+			"type": "mrkdwn",
+			"text": "%COURT% で予約可能です。"
+		}
+	]
+}

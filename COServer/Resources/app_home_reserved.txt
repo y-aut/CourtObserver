@@ -1,0 +1,31 @@
+﻿,
+{
+	"type": "divider"
+},
+{
+	"type": "section",
+	"text": {
+		"type": "mrkdwn",
+		"text": "%START%:00 - %END%:00 : :x:"
+	},
+	"accessory": {
+		"type": "button",
+		"text": {
+			"type": "plain_text",
+			"text": "%OFF=:bell:ON=:no_entry_sign:%",
+			"emoji": true
+		},
+		%OFF=ON="style": "danger",%
+		"value": "click_notif",
+		"action_id": "button-action"
+	}
+},
+{
+	"type": "context",
+	"elements": [
+		{
+			"type": "mrkdwn",
+			"text": "*%PEOPLE%* はこの時間帯への通知をオンにしています。"
+		}
+	]
+}

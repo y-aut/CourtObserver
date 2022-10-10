@@ -24,7 +24,8 @@ namespace COServer
         /// </summary>
         public static FirestoreDb Initialize()
         {
-            var jsonString = File.ReadAllText("service_account_key.json");
+            var jsonString = File.ReadAllText(
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Resources\service_account_key.json"));
             var builder = new FirestoreClientBuilder { JsonCredentials = jsonString };
             return FirestoreDb.Create(FIRESTORE_PROJECT_ID, builder.Build());
         }

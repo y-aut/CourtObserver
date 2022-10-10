@@ -8,6 +8,24 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\app_home.txt" />
+    <None Remove="Resources\app_home_empty.txt" />
+    <None Remove="Resources\app_home_reserved.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Resources\app_home.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\app_home_empty.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\app_home_reserved.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Google.Cloud.Firestore" Version="3.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
   </ItemGroup>
@@ -17,7 +35,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="service_account_key.json">
+    <Content Update="Resources\service_account_key.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
