@@ -39,15 +39,8 @@ namespace COServer
         /// <returns>データを変更したかどうか。</returns>
         public static async Task<bool> AddUserAsync(DateHour date, SlackUser user)
         {
-            var list = (await GetUsersAsync(date)).ToList();
-            if (list.Contains(user))
-            {
-                return false;
-            }
-            list.Add(user);
-            await Firestore.SetDataAsync(COLLECTION_ID, date.Date.ToKeyString(), date.Hour.ToString(),
-                list.Select(i => i.ID));
-            return true;
+            return await Firestore.AddDataAsync(COLLECTION_ID, date.Date.ToKeyString(),
+                date.Hour.ToString(), user.ID);
         }
 
         /// <summary>
@@ -56,15 +49,24 @@ namespace COServer
         /// <returns>データを変更したかどうか。</returns>
         public static async Task<bool> RemoveUserAsync(DateHour date, SlackUser user)
         {
-            var list = (await GetUsersAsync(date)).ToList();
-            if (!list.Contains(user))
+            return await Firestore.RemoveDataAsync(COLLECTION_ID, date.Date.ToKeyString(),
+                date.Hour.ToString(), user.ID);
+        }
+
+        /// <summary>
+        /// ユーザーの指定した時刻の通知を設定します。
+        /// </summary>
+        /// <returns>データを変更したかどうか。</returns>
+        public static async Task<bool> SetUserAsync(DateHour date, SlackUser user, bool value)
+        {
+            if (value)
             {
-                return false;
+                return await AddUserAsync(date, user);
             }
-            list.Remove(user);
-            await Firestore.SetDataAsync(COLLECTION_ID, date.Date.ToKeyString(), date.Hour.ToString(),
-                list.Select(i => i.ID));
-            return true;
+            else
+            {
+                return await RemoveUserAsync(date, user);
+            }
         }
 
         /// <summary>
@@ -73,14 +75,7 @@ namespace COServer
         /// <returns>データを変更したかどうか。</returns>
         public static async Task<bool> RemoveUsersAsync(DateHour date)
         {
-            var list = await GetUsersAsync(date);
-            if (!list.Any())
-            {
-                return false;
-            }
-            await Firestore.SetDataAsync(COLLECTION_ID, date.Date.ToKeyString(), date.Hour.ToString(),
-                new List<string>());
-            return true;
+            return await Firestore.RemoveListAsync(COLLECTION_ID, date.Date.ToKeyString(), date.Hour.ToString());
         }
 
         /// <summary>
@@ -88,7 +83,7 @@ namespace COServer
         /// </summary>
         public static async Task CleanAsync()
         {
-            var today = int.Parse(DateOnly.FromDateTime(DateTime.Today).ToKeyString());
+            var today = int.Parse(JST.Today.ToKeyString());
             await Firestore.RemoveDocumentsAsync(COLLECTION_ID,
                 doc => int.Parse(doc.Id) < today);
         }

@@ -94,4 +94,25 @@ namespace COLib
             };
         }
     }
+
+    /// <summary>
+    /// 日本標準時を扱うクラスです。
+    /// </summary>
+    public static class JST
+    {
+        private static readonly TimeZoneInfo JapanTimeZone =
+            TimeZoneInfo.FindSystemTimeZoneById("Tokyo Standard Time");
+
+        /// <summary>
+        /// JST で今日の日付を取得します。
+        /// </summary>
+        public static DateOnly Today
+        {
+            get
+            {
+                return DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(
+                    JapanTimeZone.BaseUtcOffset).DateTime);
+            }
+        }
+    }
 }

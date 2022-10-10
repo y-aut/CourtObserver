@@ -22,7 +22,7 @@ namespace CourtObserver
         {
             // 合計日数
             int days;
-            DateOnly today = DateOnly.FromDateTime(DateTime.Today);
+            DateOnly today = JST.Today;
             for (int i = 0; ; i++)
             {
                 var state = calendar.GetValue(new DateHour(today.AddDays(i), 12));

@@ -159,15 +159,15 @@ namespace CourtObserver
         public void Loop()
         {
             // 最初の 2週間は取得済み
-            DateTime today = DateTime.Today;
-            DateOnly date = DateOnly.FromDateTime(today);
+            DateOnly today = JST.Today;
+            DateOnly date = today;
             while (true)
             {
                 // 日付が変わったら古い情報は削除
-                if (DateTime.Today != today)
+                if (JST.Today != today)
                 {
                     CourtCalendar.Clean();
-                    today = DateTime.Today;
+                    today = JST.Today;
                 }
 
                 try
@@ -183,7 +183,7 @@ namespace CourtObserver
                         date = date.AddDays(14);
                         UpdateTwoWeeksSince(date);
                     }
-                    date = DateOnly.FromDateTime(today);
+                    date = today;
                     UpdateTwoWeeksSince(date);
                 }
                 catch (NoSuchElementException e)
@@ -193,7 +193,7 @@ namespace CourtObserver
                     Console.WriteLine("要素が見つかりませんでした。ページを初期化します。");
                     Console.WriteLine();
                     Initialize();
-                    date = DateOnly.FromDateTime(today);
+                    date = today;
                     continue;
                 }
 
@@ -306,7 +306,7 @@ namespace CourtObserver
             var month = int.Parse(match.Groups[1].Value);
             var day = int.Parse(match.Groups[2].Value);
             var dayOfWeek = (DayOfWeek)Util.DayOfWeekString.IndexOf(match.Groups[3].Value);
-            var thisYear = DateTime.Today.Year;
+            var thisYear = JST.Today.Year;
 
             // 2/29 なら閏年の年を採用
             if (month == 2 && day == 29)

@@ -60,7 +60,7 @@ namespace COLib
         /// </summary>
         public void Clean()
         {
-            var today = DateOnly.FromDateTime(DateTime.Today);
+            var today = JST.Today;
             foreach (var key in data.Keys)
             {
                 if (key.Date < today)

@@ -16,7 +16,7 @@
 			"emoji": true
 		},
 		%OFF=ON="style": "danger",%
-		"value": "click_notif",
+		"value": "notif_%OFF=fON=t%_%START%",
 		"action_id": "button-action"
 	}
 },
@@ -25,7 +25,7 @@
 	"elements": [
 		{
 			"type": "mrkdwn",
-			"text": "*%PEOPLE%* はこの時間帯への通知をオンにしています。"
+			"text": "%PEOPLE%"
 		}
 	]
 }

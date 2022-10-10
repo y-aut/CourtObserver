@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -11,10 +12,26 @@ namespace COServer
     /// </summary>
     public static partial class Util
     {
+        private static ILogger? _logger;
+
         /// <summary>
         /// 共用のロガーオブジェクトです。
         /// </summary>
-        public static ILogger? Logger { get; set; }
+        public static ILogger Logger
+        {
+            set
+            {
+                _logger = value;
+            }
+            get
+            {
+                if (_logger == null)
+                {
+                    throw new NullReferenceException();
+                }
+                return _logger;
+            }
+        }
 
         /// <summary>
         /// ログを出力して ObjectResult を送信します。
@@ -183,31 +200,155 @@ namespace COServer
         /// </summary>
         public static string? GetStringFromPath(this JsonDict dict, string path)
         {
+            return GetTFromPath(dict, path, GetValueAsString, _ => null);
+        }
+
+        /// <summary>
+        /// "key1/0/./2/key2" のようなパスに対応する値を JsonDict として取り出します。
+        /// 取り出せない場合は、null が返されます。
+        /// </summary>
+        public static JsonDict? GetJsonDictFromPath(this JsonDict dict, string path)
+        {
+            return GetTFromPath(dict, path, GetValueAsJsonDict, i => i);
+        }
+
+        /// <summary>
+        /// "key1/0/./2/key2" のようなパスに対応する値を JsonDict のリストとして取り出します。
+        /// 取り出せない場合は、空のリストが返されます。
+        /// </summary>
+        public static List<JsonDict> GetListOfJsonDictFromPath(this JsonDict dict, string path)
+        {
+            return GetTFromPath(dict, path, GetValueAsListOfJsonDict, _ => null) ?? new();
+        }
+
+        private static T? GetTFromPath<T>(this JsonDict dict, string path,
+            Func<JsonDict, string, T?> finish, Func<JsonDict, T?> handler)
+        {
             if (path.Length == 0)
             {
-                return null;
+                return default;
             }
             
             var keys = path.Split("/");
             var current = dict;
-            for (int i = 0; i < keys.Length - 1; i++)
+
+            int i;
+            for (i = 0; i < keys.Length - 1; i++)
             {
                 // 次が数字なら配列
                 if (int.TryParse(keys[i + 1], out int index))
                 {
-                    current = dict.GetValueAsJsonDict(keys[i], index);
+                    current = current.GetValueAsJsonDict(keys[i++], index);
                 }
                 else
                 {
-                    current = dict.GetValueAsJsonDict(keys[i]);
+                    current = current.GetValueAsJsonDict(keys[i]);
                 }
                 if (current == null)
                 {
-                    return null;
+                    return default;
                 }
             }
 
-            return current.GetValueAsString(keys.Last());
+            // パスの最後が数字なら JsonDict で確定
+            if (i == keys.Length)
+            {
+                return handler(current);
+            }
+            return finish(current, keys.Last());
+        }
+
+        /// <summary>
+        /// 任意のオブジェクトを JsonElement に変換します。
+        /// </summary>
+        public static JsonElement ToJsonElement(this object? dict)
+        {
+            return JsonSerializer.Deserialize<JsonElement>(JsonSerializer.Serialize(dict));
+        }
+
+        /// <summary>
+        /// JsonDict 中の指定したパスにある値を新しい値で置き換えます。
+        /// 置き換えに失敗した場合は、null が返されます。
+        /// </summary>
+        public static JsonDict? Replace(this JsonDict dict, string path, object value)
+        {
+            return dict.ReplaceInner(path, value.ToJsonElement());
+        }
+
+        private static JsonDict? ReplaceInner(this JsonDict dict, string path, JsonElement? value)
+        {
+            if (value == null)
+            {
+                return null;
+            }
+
+            var last = path.LastIndexOf('/');
+            if (last == -1)
+            {
+                dict[path] = value.Value;
+                return dict;
+            }
+
+            var hd = path[..last];
+            var tl = path[(last + 1)..];
+
+            if (int.TryParse(tl, out int index))
+            {
+                var hdDicts = dict.GetListOfJsonDictFromPath(hd);
+                var res = JsonSerializer.Deserialize<JsonDict>(value.Value);
+                if (res == null)
+                {
+                    return null;
+                }
+                hdDicts[index] = res;
+                return dict.ReplaceInner(hd, hdDicts.ToJsonElement());
+            }
+            else
+            {
+                var hdDict = dict.GetJsonDictFromPath(hd);
+                if (hdDict == null)
+                {
+                    return null;
+                }
+                hdDict[tl] = value.Value;
+                return dict.ReplaceInner(hd, hdDict.ToJsonElement());
+            }
+        }
+
+        /// <summary>
+        /// Json 文字列のパスで示す値の中に新しいキーと値の組を加えます。
+        /// 失敗した場合は、null が返されます。
+        /// </summary>
+        public static JsonDict? AddJson(this JsonDict dict, string path, string key, object value)
+        {
+            var target = dict.GetJsonDictFromPath(path);
+            if (target == null)
+            {
+                return null;
+            }
+            if (!target.ContainsKey(key))
+            {
+                target.Add(key, value.ToJsonElement());
+            }
+            return dict.Replace(path, target);
+        }
+
+        /// <summary>
+        /// Json 文字列のパスで示す値の中のキーと値の組を削除します。
+        /// 失敗した場合は、null が返されます。
+        /// </summary>
+        public static JsonDict? RemoveJson(this JsonDict dict, string path, string key)
+        {
+            var target = dict.GetJsonDictFromPath(path);
+            if (target == null)
+            {
+                return null;
+            }
+            if (target.ContainsKey(key))
+            {
+                target.Remove(key);
+            }
+            return dict.Replace(path, target);
         }
     }
 }
