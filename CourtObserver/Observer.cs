@@ -170,7 +170,7 @@ namespace CourtObserver
             DateOnly date = today;
             while (true)
             {
-                Util.WriteInfo(JST.Now.ToString("MM/dd hh:mm") + ": 情報を取得します。");
+                Util.WriteInfo("情報を取得します。");
 
                 // 日付が変わったら古い情報は削除
                 if (JST.Today != today)

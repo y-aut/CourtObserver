@@ -14,10 +14,17 @@ namespace CourtObserver
         /// </summary>
         const string POSTMESSAGE_URL = @"https://slack.com/api/chat.postMessage";
 
+#if DEBUG
         /// <summary>
         /// メインチャンネルの ID です。
         /// </summary>
         const string CHANNEL_ID = @"C03EY5A4S57";
+#else
+        /// <summary>
+        /// メインチャンネルの ID です。
+        /// </summary>
+        const string CHANNEL_ID = @"C045M38UPLP";
+#endif
 
         /// <summary>
         /// テキストを送信します。
