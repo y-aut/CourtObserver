@@ -52,7 +52,7 @@ namespace CourtObserver
             }
 
             // コート状況をアップロード
-            tasks.Add(Task.Run(UploadCalendar));
+            tasks.Add(UploadCalendar());
 
             while (true)
             {
@@ -74,56 +74,64 @@ namespace CourtObserver
         /// <summary>
         /// 定期的に取得したコート状況をアップロードします。
         /// </summary>
-        private static void UploadCalendar()
+        private static async Task UploadCalendar()
         {
-            // 次回のアップロード時刻
-            List<DateTime> next = new();
-            var now = JST.Now;
-
-            for (int i = 0; i < observers.Count; i++)
+            try
             {
-                var minute = (60 / observers.Count) * i;
-                next.Add(new DateTime(now.Year, now.Month, now.Day, now.Hour, minute, 0));
-                if (now.Minute >= minute)
-                {
-                    next[i] = next[i].AddHours(1);
-                }
-            }
+                // 次回のアップロード時刻
+                List<DateTime> next = new();
+                var now = JST.Now;
 
-            while (!flgCancel)
-            {
-                Sleep(3000);
-                if (flgCancel)
-                {
-                    break;
-                }
-
-                now = JST.Now;
                 for (int i = 0; i < observers.Count; i++)
                 {
-                    // アップロード時刻かどうか
-                    if (now < next[i])
+                    var minute = (60 / observers.Count) * i;
+                    next.Add(new DateTime(now.Year, now.Month, now.Day, now.Hour, minute, 0));
+                    if (now.Minute >= minute)
                     {
-                        continue;
+                        next[i] = next[i].AddHours(1);
                     }
-                    // 1時間に 1回アップロードする
-                    next[i] = next[i].AddHours(1);
-
-                    // 最後にアップロードしたときから変更があれば再アップロード
-                    if (!updated[i])
-                    {
-                        Util.WriteInfo("アップロード時刻になりましたが、変更がないためスキップされました。");
-                        continue;
-                    }
-
-                    using var img = Drawer.DrawCalendar(observers[i].CourtCalendar);
-                    img.Save($"image_{i}.png");
-                    Slack.SendTextImageAsync(
-                        $"{courts[i].ToDisplayString()}の空き状況をお知らせします。:tennis:",
-                        $"image_{i}.png").Wait();
-
-                    updated[i] = false;
                 }
+
+                while (!flgCancel)
+                {
+                    Sleep(3000);
+                    if (flgCancel)
+                    {
+                        break;
+                    }
+
+                    now = JST.Now;
+                    for (int i = 0; i < observers.Count; i++)
+                    {
+                        // アップロード時刻かどうか
+                        if (now < next[i])
+                        {
+                            continue;
+                        }
+                        // 1時間に 1回アップロードする
+                        next[i] = next[i].AddHours(1);
+
+                        // 最後にアップロードしたときから変更があれば再アップロード
+                        if (!updated[i])
+                        {
+                            Util.WriteInfo("アップロード時刻になりましたが、変更がないためスキップされました。");
+                            continue;
+                        }
+
+                        string fileName = $"image_{courts[i].ToDataString()}.png";
+                        using var img = Drawer.DrawCalendar(observers[i].CourtCalendar);
+                        img.Save(fileName);
+                        await Slack.SendTextImageAsync(
+                            $"{courts[i].ToDisplayString()}の空き状況をお知らせします。:tennis:",
+                            fileName);
+
+                        updated[i] = false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Util.WriteInfo(ex.ToString());
             }
         }
 

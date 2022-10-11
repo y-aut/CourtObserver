@@ -95,14 +95,16 @@ namespace CourtObserver
             };
 
             g.DrawString(calendar.Court.ToDisplayString(), font, Brushes.White,
-                new Rectangle(0, 0, bmp.Width, TOP_HEADER_HEIGHT), format);
+                new Rectangle(0, 3, bmp.Width, TOP_HEADER_HEIGHT), format);
             for (int i = 0; i < days; i++)
             {
-                g.DrawString(today.AddDays(i).ToDisplayString(), font, Brushes.Black, GetRowHeader(i), format);
+                g.DrawString(today.AddDays(i).ToDisplayString(), font, Brushes.Black,
+                    GetRowHeader(i).Offsetted(0, 3), format);
             }
             for (int i = Const.START_HOUR; i < Const.END_HOUR; i++)
             {
-                g.DrawString(i.ToString(), font, Brushes.Black, GetColHeader(i), format);
+                g.DrawString(i.ToString(), font, Brushes.Black,
+                    GetColHeader(i).Offsetted(0, 2), format);
             }
 
             // 空き状況
@@ -205,6 +207,15 @@ namespace CourtObserver
                 rect.Y + (rect.Height - side) / 2,
                 side, side);
             g.DrawImage(img, newRect);
+        }
+    }
+
+    public static partial class DrawUtil
+    {
+        public static Rectangle Offsetted(this Rectangle rect, int x, int y)
+        {
+            rect.Offset(x, y);
+            return rect;
         }
     }
 }
