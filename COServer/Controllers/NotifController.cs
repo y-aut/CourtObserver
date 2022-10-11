@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace COServer.Controllers
 {
     /// <summary>
-    /// どの時間の通知をどのユーザーがオンにしているかの情報を扱います。
+    /// どの時間の通知をどのユーザーがオンにしているかの情報を取得・設定する API を実装します。
     /// </summary>
     [ApiController]
     [Route("Users")]

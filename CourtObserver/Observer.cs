@@ -34,6 +34,13 @@ namespace CourtObserver
         public bool Cancel { get; set; }
 
         /// <summary>
+        /// コート状況の更新（新規取得も含む）を検知したときに発生するイベントです。
+        /// 現在の画面の取得処理の終わりに発生します。
+        /// 引数は、値が更新された日付と、変更後の値をペアにもつ CourtCalendar オブジェクトです。
+        /// </summary>
+        public event EventHandler<CourtCalendar> CourtStateUpdated = delegate { };
+
+        /// <summary>
         /// コート状況の変更を検知したときに発生するイベントです。
         /// 現在の画面の取得処理の終わりに発生します。
         /// 引数は、値が更新された日付と、変更前の値をペアにもつ CourtCalendar オブジェクトです。
@@ -216,7 +223,10 @@ namespace CourtObserver
         /// </summary>
         private void UpdateCalendar()
         {
+            // 以前に取得していたもので値が変わったもののみ。新しいデータを格納
             CourtCalendar? changed = null;
+            // 取得していなかったものも含める。古いデータを格納
+            CourtCalendar? updated = null;
 
             for (int i = 0; i < 14; i++)
             {
@@ -253,6 +263,14 @@ namespace CourtObserver
                     {
                         // 値が変更されたかを確認する
                         var old = CourtCalendar.GetValue(new DateHour(date, time + j));
+                        if (old == null || old != state)
+                        {
+                            if (updated == null)
+                            {
+                                updated = new CourtCalendar(Court);
+                            }
+                            updated.SetValue(new DateHour(date, time + j), state);
+                        }
                         if (old != null && old != state)
                         {
                             if (changed == null)
@@ -275,6 +293,10 @@ namespace CourtObserver
                 }
             }
 
+            if (updated != null)
+            {
+                CourtStateUpdated(this, updated);
+            }
             if (changed != null)
             {
                 CourtStateChanged(this, changed);

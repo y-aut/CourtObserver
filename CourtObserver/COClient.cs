@@ -41,5 +41,19 @@ namespace CourtObserver
             }
             return result;
         }
+
+        public static async Task UpdateCourtAsync(DateHour date, Court court, CourtState state)
+        {
+            using var httpClient = new HttpClient();
+            using var request = new HttpRequestMessage(
+                new HttpMethod("POST"),
+                $"{COSERVER_URL}/CourtCalendar/{date.ToApiString()}/{court.ToDataString()}/{state.ToDataString()}");
+
+            var response = await httpClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception(response.ToString());
+            }
+        }
     }
 }

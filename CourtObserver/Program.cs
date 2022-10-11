@@ -35,6 +35,7 @@ namespace CourtObserver
                 var court = courts[i];
 
                 // 変更を検知する
+                obs.CourtStateUpdated += CourtState_Updated;
                 obs.CourtStateChanged += CourtState_Changed;
 
                 tasks.Add(Task.Run(() =>
@@ -103,6 +104,31 @@ namespace CourtObserver
         }
 
         /// <summary>
+        /// 情報の更新をハンドルします。
+        /// </summary>
+        private static async void CourtState_Updated(object? sender, CourtCalendar e)
+        {
+            // API に新しいデータを送る
+            try
+            {
+                foreach (var date in e.GetDates())
+                {
+                    var val = e.GetValue(date);
+                    if (val == null)
+                    {
+                        continue;
+                    }
+                    await COClient.UpdateCourtAsync(date, e.Court, val.Value);
+                    Sleep(100);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+        }
+
+        /// <summary>
         /// コート状況の変更をハンドルします。
         /// </summary>
         private static async void CourtState_Changed(object? sender, CourtCalendar e)
@@ -155,7 +181,7 @@ namespace CourtObserver
         }
 
         /// <summary>
-        /// キャンセルフラグを確認しながら、ms ミリ秒だけ処理を停止します。
+        /// キャンセルフラグを確認しながら、ms * WAIT_RATE ミリ秒だけ処理を停止します。
         /// </summary>
         private static void Sleep(int ms)
         {

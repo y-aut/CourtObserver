@@ -158,5 +158,55 @@ namespace COServer
             await Task.WhenAll((await query.GetSnapshotAsync()).Where(predicate)
                 .Select(doc => query.Document(doc.Id).DeleteAsync()).ToArray());
         }
+
+        /// <summary>
+        /// キーと値の組を用いてコレクションの値を更新します。
+        /// </summary>
+        /// <returns>データを変更したかどうか。</returns>
+        public static async Task<bool> UpdatePair(string collection, string document,
+            string key, string value, Func<string, string> keySelecter, Func<string, string> valueSelecter)
+        {
+            var doc = db.Collection(collection).Document(document);
+            var dict = (await doc.GetSnapshotAsync()).ToDictionary();
+
+            if (dict == null)
+            {
+                dict = new Dictionary<string, object>()
+                {
+                    { key, new List<object>() { value } }
+                };
+            }
+            else if (!dict.TryGetValue(key, out var obj))
+            {
+                dict.Add(key, new List<object>() { value });
+            }
+            else
+            {
+                if (obj is not List<object> list)
+                {
+                    Util.Logger.LogWarning("Database error occured.");
+                    return false;
+                }
+                var objKey = keySelecter(value);
+                var objVal = valueSelecter(value);
+                var index = list.FindIndex(i => keySelecter((string)i) == objKey);
+                if (index >= 0)
+                {
+                    if (valueSelecter((string)list[index]) == objVal)
+                    {
+                        return false;
+                    }
+                    list[index] = value;
+                }
+                else
+                {
+                    list.Add(value);
+                }
+                dict[key] = list;
+            }
+
+            await doc.SetAsync(dict);
+            return true;
+        }
     }
 }

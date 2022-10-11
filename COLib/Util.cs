@@ -13,6 +13,8 @@ namespace COLib
     {
         Takara,
         Okazaki,
+
+        Unknown = -1,
     }
 
     /// <summary>
@@ -27,6 +29,46 @@ namespace COLib
         Reserved,   // 予約不可
         OutOfDate,  // 予約受付期間外
         Closed,     // 休館・点検
+    }
+
+    /// <summary>
+    /// コートと空き状況をペアにもつ構造体です。
+    /// </summary>
+    public struct CourtValue
+    {
+        public Court Court { get; set; }
+        public CourtState CourtState { get; set; }
+
+        public CourtValue(Court court, CourtState state)
+        {
+            Court = court;
+            CourtState = state;
+        }
+
+        public string ToDataString()
+        {
+            return Court.ToDataString() + "," + CourtState.ToDataString();
+        }
+
+        public static CourtValue Parse(string str)
+        {
+            int comma = str.IndexOf(",");
+            return new CourtValue(str[..comma].ParseCourt(), str[(comma + 1)..].ParseCourtState());
+        }
+
+        public static bool TryParse(string str, out CourtValue value)
+        {
+            try
+            {
+                value = Parse(str);
+                return true;
+            }
+            catch (Exception)
+            {
+                value = new();
+                return false;
+            }
+        }
     }
 
     /// <summary>
@@ -91,6 +133,65 @@ namespace COLib
                 Court.Takara => "宝が池",
                 Court.Okazaki => "岡崎",
                 _ => "",
+            };
+        }
+
+        /// <summary>
+        /// コートをデータベース用文字列に変換します。
+        /// </summary>
+        public static string ToDataString(this Court court)
+        {
+            return court switch
+            {
+                Court.Takara => "takara",
+                Court.Okazaki => "okazaki",
+                _ => "",
+            };
+        }
+
+        /// <summary>
+        /// データベース用文字列をコートに変換します。
+        /// </summary>
+        public static Court ParseCourt(this string str)
+        {
+            return str.ToLower() switch
+            {
+                "takara" => Court.Takara,
+                "okazaki" => Court.Okazaki,
+                _ => Court.Unknown,
+            };
+        }
+
+        /// <summary>
+        /// 空き状況をデータベース用文字列に変換します。
+        /// </summary>
+        public static string ToDataString(this CourtState court)
+        {
+            return court switch
+            {
+                CourtState.Empty => "empty",
+                CourtState.Reserved => "reserved",
+                CourtState.Lottery => "lottery",
+                CourtState.OutOfDate => "outofdate",
+                CourtState.Closed => "closed",
+                CourtState.Unknown => "unknown",
+                _ => "",
+            };
+        }
+
+        /// <summary>
+        /// データベース用文字列を空き状況に変換します。
+        /// </summary>
+        public static CourtState ParseCourtState(this string str)
+        {
+            return str.ToLower() switch
+            {
+                "empty" => CourtState.Empty,
+                "reserved" => CourtState.Reserved,
+                "lottery" => CourtState.Lottery,
+                "outofdate" => CourtState.OutOfDate,
+                "closed" => CourtState.Closed,
+                _ => CourtState.Unknown,
             };
         }
     }

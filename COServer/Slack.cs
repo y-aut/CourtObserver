@@ -31,29 +31,10 @@ namespace COServer
         {
             try
             {
-                // ダミー
-                var today = JST.Today;
-                var cal = new List<CourtCalendar>();
-                cal.Add(new CourtCalendar(Court.Takara));
-                cal.Add(new CourtCalendar(Court.Okazaki));
-                for (int i = 0; i < 10; i++)
-                {
-                    for (int j = Const.START_HOUR; j < Const.END_HOUR; j++)
-                    {
-                        cal[0].SetValue(new DateHour(today.AddDays(i), j),
-                            (i + j) % 2 == 0 ? CourtState.Empty : CourtState.Reserved);
-                    }
-                }
-                for (int i = 0; i < 5; i++)
-                {
-                    for (int j = Const.START_HOUR; j < Const.END_HOUR; j++)
-                    {
-                        cal[1].SetValue(new DateHour(today.AddDays(i), j),
-                            i % 2 == 1 ? CourtState.Empty : CourtState.Reserved);
-                    }
-                }
+                // 予約可能なコートのリストを取得
+                var calendar = await CourtCalendarIO.GetCourtsAsync(date);
 
-                var json = await GetAppHomeJson(user, date, cal);
+                var json = await GetAppHomeJson(user, date, calendar);
 
                 // セッション ID が変わっていれば、更新を破棄
                 if (sessionId >= 0 && sessionId != SlackEventController.GetUserAccess(user))
@@ -152,7 +133,8 @@ namespace COServer
         /// <summary>
         /// App ホーム用の Json 文字列を作成します。
         /// </summary>
-        private static async Task<string> GetAppHomeJson(SlackUser user, DateOnly date, List<CourtCalendar> calendars)
+        private static async Task<string> GetAppHomeJson(SlackUser user, DateOnly date,
+            Dictionary<int, IEnumerable<CourtValue>> calendar)
         {
             var json = new StringBuilder(File.ReadAllText(
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Resources\app_home.txt")));
@@ -180,16 +162,18 @@ namespace COServer
                 var courts = new List<Court>();
                 // 情報を未取得のコート
                 bool isUnknown = true;
-                for (int j = 0; j < calendars.Count; j++)
+                if (calendar.TryGetValue(hours.ElementAt(i), out var list))
                 {
-                    var val = calendars[j].GetValue(new DateHour(date, hours.ElementAt(i)));
-                    if (isUnknown && val != null && val != CourtState.Unknown)
+                    foreach (var val in list)
                     {
-                        isUnknown = false;
-                    }
-                    if (val == CourtState.Empty)
-                    {
-                        courts.Add(calendars[j].Court);
+                        if (isUnknown && val.CourtState != CourtState.Unknown)
+                        {
+                            isUnknown = false;
+                        }
+                        if (val.CourtState == CourtState.Empty)
+                        {
+                            courts.Add(val.Court);
+                        }
                     }
                 }
                 if (isUnknown)
