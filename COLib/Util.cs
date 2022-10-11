@@ -200,7 +200,7 @@ namespace COLib
         /// </summary>
         public static void WriteInfo(string str)
         {
-            Console.WriteLine($"[{JST.Now:MM/dd HH:mm:ss.fff} {str}");
+            Console.WriteLine($"[{JST.Now:MM/dd HH:mm:ss.fff}] {str}");
         }
     }
 
