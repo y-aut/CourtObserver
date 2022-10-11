@@ -40,11 +40,12 @@ namespace CourtObserver
             var response = await httpClient.SendAsync(request);
             if (response.IsSuccessStatusCode)
             {
-                Console.WriteLine("Slack にテキストが送信されました。");
+                Util.WriteInfo("Slack にテキストが送信されました。");
             }
             else
             {
-                Console.WriteLine(response);
+                Util.WriteInfo("Slack にテキストを送信する際に失敗レスポンスを受け取りました。\n" +
+                    response.ToString());
             }
         }
 
@@ -79,11 +80,12 @@ namespace CourtObserver
             var response = await httpClient.SendAsync(request);
             if (response.IsSuccessStatusCode)
             {
-                Console.WriteLine("Slack にファイルがアップロードされました。");
+                Util.WriteInfo("Slack にファイルがアップロードされました。");
             }
             else
             {
-                Console.WriteLine(response);
+                Util.WriteInfo("Slack にファイルをアップロードする際に失敗レスポンスを受け取りました。\n" +
+                    response.ToString());
             }
         }
 

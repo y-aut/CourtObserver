@@ -194,6 +194,14 @@ namespace COLib
                 _ => CourtState.Unknown,
             };
         }
+
+        /// <summary>
+        /// コンソールに現在の時刻と情報を書き込みます。
+        /// </summary>
+        public static void WriteInfo(string str)
+        {
+            Console.WriteLine($"[{JST.Now:MM/dd HH:mm:ss.fff} {str}");
+        }
     }
 
     /// <summary>
@@ -213,6 +221,17 @@ namespace COLib
             {
                 return DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(
                     JapanTimeZone.BaseUtcOffset).DateTime);
+            }
+        }
+
+        /// <summary>
+        /// JST で現在の時刻を取得します。
+        /// </summary>
+        public static DateTime Now
+        {
+            get
+            {
+                return DateTimeOffset.UtcNow.ToOffset(JapanTimeZone.BaseUtcOffset).DateTime;
             }
         }
     }

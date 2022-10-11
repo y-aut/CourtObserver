@@ -13,7 +13,7 @@ namespace CourtObserver
         private const string URL = "https://g-kyoto.pref.kyoto.lg.jp/reserve_j/core_i/init.asp?SBT=1";
 
         // 待機時間の余裕（最小で 10）
-        private const int WAIT_RATE = 10;
+        private const int WAIT_RATE = 30;
 
         private readonly ChromeDriver driver;
         private ChromeDriver inner;
@@ -140,7 +140,7 @@ namespace CourtObserver
                 Sleep(200);
                 // 2週間表示にする
                 driver.FindElement(By.Id("radio1")).Click();
-                Sleep(10);
+                Sleep(50);
                 // アラートを閉じる
                 driver.SwitchTo().Alert().Accept();
                 Sleep(1000);
@@ -152,9 +152,9 @@ namespace CourtObserver
             }
             catch (NoSuchElementException e)
             {
-                Console.WriteLine(e.ToString());
+                Util.WriteInfo(e.ToString());
                 Console.WriteLine();
-                Console.WriteLine("要素が見つかりませんでした。ページを再度初期化します。");
+                Util.WriteInfo("要素が見つかりませんでした。ページを再度初期化します。");
                 Console.WriteLine();
                 Initialize();
             }
@@ -170,9 +170,13 @@ namespace CourtObserver
             DateOnly date = today;
             while (true)
             {
+                Util.WriteInfo(JST.Now.ToString("MM/dd hh:mm") + ": 情報を取得します。");
+
                 // 日付が変わったら古い情報は削除
                 if (JST.Today != today)
                 {
+                    Util.WriteInfo(JST.Now.ToString("MM/dd hh:mm") + ": 日付が変わりました。");
+
                     CourtCalendar.Clean();
                     today = JST.Today;
                 }
@@ -195,16 +199,16 @@ namespace CourtObserver
                 }
                 catch (NoSuchElementException e)
                 {
-                    Console.WriteLine(e.ToString());
+                    Util.WriteInfo(e.ToString());
                     Console.WriteLine();
-                    Console.WriteLine("要素が見つかりませんでした。ページを初期化します。");
+                    Util.WriteInfo("要素が見つかりませんでした。ページを初期化します。");
                     Console.WriteLine();
                     Initialize();
                     date = today;
                     continue;
                 }
 
-                Sleep(15000);
+                Sleep(10000);
             }
         }
 
