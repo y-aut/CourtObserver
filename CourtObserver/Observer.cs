@@ -148,7 +148,6 @@ namespace CourtObserver
                 var selectShisetu = new SelectElement(driver.FindElement(By.Name("lst_shisetu")));
                 selectShisetu.SelectByIndex(GetTennisCourtIndex(Court));
                 Sleep(1000);
-                UpdateCalendar();
             }
             catch (NoSuchElementException e)
             {
@@ -165,7 +164,6 @@ namespace CourtObserver
         /// </summary>
         public void Loop()
         {
-            // 最初の 2週間は取得済み
             DateOnly today = JST.Today;
             DateOnly date = today;
             while (true)
@@ -184,18 +182,11 @@ namespace CourtObserver
                 try
                 {
                     // 抽選予約、または期間外になるまで取得を続ける
-                    while (true)
+                    while (!UpdateTwoWeeksSince(date))
                     {
-                        var lastState = CourtCalendar.GetValue(new DateHour(date.AddDays(13), 12));
-                        if (lastState == CourtState.Lottery || lastState == CourtState.OutOfDate)
-                        {
-                            break;
-                        }
                         date = date.AddDays(14);
-                        UpdateTwoWeeksSince(date);
                     }
                     date = today;
-                    UpdateTwoWeeksSince(date);
                 }
                 catch (NoSuchElementException e)
                 {
@@ -207,35 +198,37 @@ namespace CourtObserver
                     date = today;
                     continue;
                 }
-
-                Sleep(10000);
             }
         }
 
         /// <summary>
         /// date から 2週間先までの空き状況を更新します。
         /// </summary>
-        private void UpdateTwoWeeksSince(DateOnly date)
+        /// <returns>データの終わりかどうか。</returns>
+        private bool UpdateTwoWeeksSince(DateOnly date)
         {
             inner.ExecuteScript(@$"set_cal({date:yyyyMMdd},00000000,99999999)");
             Sleep(1000);
-            UpdateCalendar();
+            return UpdateCalendar();
         }
 
         /// <summary>
         /// 現在表示されている情報をもとに空き状況を更新します。
         /// </summary>
-        private void UpdateCalendar()
+        /// <returns>データの終わりかどうか。</returns>
+        private bool UpdateCalendar()
         {
             // 以前に取得していたもので値が変わったもののみ。新しいデータを格納
             CourtCalendar? changed = null;
             // 取得していなかったものも含める。古いデータを格納
             CourtCalendar? updated = null;
 
+            var isEnd = false;
+            DateOnly date;
             for (int i = 0; i < 14; i++)
             {
                 var header = inner.FindElement(By.Id($"Day_{i}"));
-                var date = ParseDate(header.Text);
+                date = ParseDate(header.Text);
                 if (date.DayOfWeek != DayOfWeek.Saturday && date.DayOfWeek != DayOfWeek.Sunday &&
                     !CourtCalendar.Holidays.Contains(date))
                 {
@@ -253,16 +246,19 @@ namespace CourtObserver
                 {
                     int hours = int.Parse(td.GetAttribute("colspan")) / 4;
                     // 受付期間外のときは、a タグは存在しない
-                    IWebElement img;
-                    try
+                    var img = td.FindElements(By.XPath(@"a/img"));
+                    if (img.Count == 0)
                     {
-                        img = td.FindElement(By.XPath(@"a/img"));
+                        img = td.FindElements(By.XPath("img"));
+                        if (img.Count == 0)
+                        {
+                            // データが存在しない月なので，for を抜ける
+                            isEnd = true;
+                            i = 10000;
+                            break;
+                        }
                     }
-                    catch (NoSuchElementException)
-                    {
-                        img = td.FindElement(By.XPath("img"));
-                    }
-                    var state = ParseCourtState(img.GetAttribute("alt"));
+                    var state = ParseCourtState(img[0].GetAttribute("alt"));
                     for (int j = 0; j < hours; j++)
                     {
                         // 値が変更されたかを確認する
@@ -297,6 +293,15 @@ namespace CourtObserver
                 }
             }
 
+            if (!isEnd)
+            {
+                var lastState = CourtCalendar.GetValue(new DateHour(date, 12));
+                if (lastState == CourtState.Lottery || lastState == CourtState.OutOfDate)
+                {
+                    isEnd = true;
+                }
+            }
+
             if (updated != null)
             {
                 CourtStateUpdated(this, updated);
@@ -305,6 +310,8 @@ namespace CourtObserver
             {
                 CourtStateChanged(this, changed);
             }
+
+            return isEnd;
         }
 
         /// <summary>
