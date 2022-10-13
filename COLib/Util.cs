@@ -22,13 +22,13 @@ namespace COLib
     /// </summary>
     public enum CourtState
     {
-        Unknown,    // 不明
-
         Empty,      // 予約可能
         Lottery,    // 抽選予約可能
         Reserved,   // 予約不可
         OutOfDate,  // 予約受付期間外
         Closed,     // 休館・点検
+
+        Unknown = -1,    // 不明
     }
 
     /// <summary>

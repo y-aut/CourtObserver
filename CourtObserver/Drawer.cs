@@ -16,6 +16,21 @@ namespace CourtObserver
         private const int TOP_HEADER_HEIGHT = CELL_HEIGHT;
 
         /// <summary>
+        /// 日数に合わせたセルの横幅を取得します。
+        /// </summary>
+        private static int GetCellWidth(int days)
+        {
+            if (days < 40)
+            {
+                return CELL_WIDTH;
+            }
+            else
+            {
+                return CELL_WIDTH + (days - 40) * 3;
+            }
+        }
+
+        /// <summary>
         /// 抽選予約、または期間外になるまでのコートの空き状況を画像に変換します。
         /// </summary>
         public static Image DrawCalendar(CourtCalendar calendar)
@@ -33,7 +48,7 @@ namespace CourtObserver
                 }
             }
 
-            var bmp = new Bitmap(GetCellX(Const.END_HOUR), GetCellY(days));
+            var bmp = new Bitmap(GetCellX(days, Const.END_HOUR), GetCellY(days));
             using Graphics g = Graphics.FromImage(bmp);
 
             // 背景色
@@ -77,12 +92,12 @@ namespace CourtObserver
                 if (Const.PRIMARY_HOUR.Contains(i))
                 {
                     // 下まで引く
-                    g.DrawLine(pen, GetCellX(i), TOP_HEADER_HEIGHT, GetCellX(i), bmp.Height);
+                    g.DrawLine(pen, GetCellX(days, i), TOP_HEADER_HEIGHT, GetCellX(days, i), bmp.Height);
                 }
                 else
                 {
                     // 初日まで引く
-                    g.DrawLine(pen, GetCellX(i), TOP_HEADER_HEIGHT, GetCellX(i), GetCellY(1));
+                    g.DrawLine(pen, GetCellX(days, i), TOP_HEADER_HEIGHT, GetCellX(days, i), GetCellY(1));
                 }
             }
 
@@ -104,7 +119,7 @@ namespace CourtObserver
             for (int i = Const.START_HOUR; i < Const.END_HOUR; i++)
             {
                 g.DrawString(i.ToString(), font, Brushes.Black,
-                    GetColHeader(i).Offsetted(0, 2), format);
+                    GetColHeader(days, i).Offsetted(0, 2), format);
             }
 
             // 空き状況
@@ -112,14 +127,14 @@ namespace CourtObserver
             // 当日のみ 1時間おき
             for (int hour = Const.START_HOUR; hour < Const.END_HOUR; hour++)
             {
-                DrawCourtState(g, GetCell(0, hour, 1), calendar.GetValue(new DateHour(today, hour)));
+                DrawCourtState(g, GetCell(days, 0, hour, 1), calendar.GetValue(new DateHour(today, hour)));
             }
 
             for (int i = 1; i < days; i++)
             {
                 for (int j = 0; j < Const.PRIMARY_HOUR.Length; j++)
                 {
-                    DrawCourtState(g, GetCell(i, Const.PRIMARY_HOUR[j], Const.PRIMARY_HOUR_SPAN[j]),
+                    DrawCourtState(g, GetCell(days, i, Const.PRIMARY_HOUR[j], Const.PRIMARY_HOUR_SPAN[j]),
                         calendar.GetValue(new DateHour(today.AddDays(i), Const.PRIMARY_HOUR[j])));
                 }
             }
@@ -130,10 +145,11 @@ namespace CourtObserver
         /// <summary>
         /// セルの X 座標を取得します。
         /// </summary>
+        /// <param name="days">合計日数。</param>
         /// <param name="hour">始まりの時刻。</param>
-        private static int GetCellX(int hour)
+        private static int GetCellX(int days, int hour)
         {
-            return ROW_HEADER_WIDTH + CELL_WIDTH * (hour - Const.START_HOUR);
+            return ROW_HEADER_WIDTH + GetCellWidth(days) * (hour - Const.START_HOUR);
         }
 
         /// <summary>
@@ -148,13 +164,14 @@ namespace CourtObserver
         /// <summary>
         /// 日付と時刻からセルを取得します。
         /// </summary>
+        /// <param name="days">合計日数。</param>
         /// <param name="dayOffset">初日を 0 とする相対日数。</param>
         /// <param name="hour">始まりの時刻。</param>
         /// <param name="span">結合するセル数。</param>
-        private static Rectangle GetCell(int dayOffset, int hour, int span)
+        private static Rectangle GetCell(int days, int dayOffset, int hour, int span)
         {
-            return new Rectangle(GetCellX(hour), GetCellY(dayOffset),
-                CELL_WIDTH * span, CELL_HEIGHT);
+            return new Rectangle(GetCellX(days, hour), GetCellY(dayOffset),
+                GetCellWidth(days) * span, CELL_HEIGHT);
         }
 
         /// <summary>
@@ -169,10 +186,11 @@ namespace CourtObserver
         /// <summary>
         /// 時刻から列ヘッダを取得します。
         /// </summary>
+        /// <param name="days">合計日数。</param>
         /// <param name="hour">始まりの時刻。</param>
-        private static Rectangle GetColHeader(int hour)
+        private static Rectangle GetColHeader(int days, int hour)
         {
-            return new Rectangle(GetCellX(hour), TOP_HEADER_HEIGHT, CELL_WIDTH, COL_HEADER_HEIGHT);
+            return new Rectangle(GetCellX(days, hour), TOP_HEADER_HEIGHT, GetCellWidth(days), COL_HEADER_HEIGHT);
         }
 
         /// <summary>

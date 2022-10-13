@@ -85,5 +85,21 @@ namespace COLib
         {
             return data.Keys;
         }
+
+        /// <summary>
+        /// ダミーのデータを格納します。
+        /// </summary>
+        /// <param name="days">格納する日数。</param>
+        public void SetDummyData(int days)
+        {
+            var today = JST.Today;
+            for (int i = 0; i < days; i++)
+            {
+                for (int j = Const.START_HOUR; j < Const.END_HOUR; j++)
+                {
+                    data.Add(new DateHour(today.AddDays(i), j), CourtState.Empty);
+                }
+            }
+        }
     }
 }
