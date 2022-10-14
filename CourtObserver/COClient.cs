@@ -55,5 +55,28 @@ namespace CourtObserver
                 throw new Exception(response.ToString());
             }
         }
+
+        /// <summary>
+        /// 昨日までのデータを削除します。
+        /// </summary>
+        public static async Task CleanAsync()
+        {
+            using var httpClient = new HttpClient();
+            using var request1 = new HttpRequestMessage(
+                new HttpMethod("DELETE"), $"{COSERVER_URL}/CourtCalendar");
+            using var request2 = new HttpRequestMessage(
+                new HttpMethod("DELETE"), $"{COSERVER_URL}/Users");
+
+            var response = await Task.WhenAll(
+                httpClient.SendAsync(request1), httpClient.SendAsync(request2));
+
+            foreach (var res in response)
+            {
+                if (!res.IsSuccessStatusCode)
+                {
+                    throw new Exception(res.ToString());
+                }
+            }
+        }
     }
 }

@@ -34,21 +34,11 @@ namespace CourtObserver
                 obs.CourtStateUpdated += CourtState_Updated;
                 obs.CourtStateChanged += CourtState_Changed;
 
-                tasks.Add(Task.Run(() =>
-                {
-                    try
-                    {
-                        obs.Initialize();
-                        obs.Loop();
-                    }
-                    catch (TaskCanceledException)
-                    {
-                    }
-                }));
+                tasks.Add(obs.RunAsync());
             }
 
             // コート状況をアップロード
-            tasks.Add(UploadCalendar());
+            tasks.Add(UploadCalendarAsync());
 
             while (true)
             {
@@ -70,8 +60,10 @@ namespace CourtObserver
         /// <summary>
         /// 定期的に取得したコート状況をアップロードします。
         /// </summary>
-        private static async Task UploadCalendar()
+        private static async Task UploadCalendarAsync()
         {
+            await Task.Yield();
+
             try
             {
                 // 次回のアップロード時刻

@@ -116,7 +116,7 @@ namespace CourtObserver
         /// <summary>
         /// 指定したコートの今後2週間の情報を表示するページまで遷移します。
         /// </summary>
-        public void Initialize()
+        private void Initialize()
         {
             try
             {
@@ -162,7 +162,7 @@ namespace CourtObserver
         /// <summary>
         /// ループしてコート状況を継続的に取得します。
         /// </summary>
-        public void Loop()
+        private async Task Loop()
         {
             DateOnly today = JST.Today;
             DateOnly date = today;
@@ -176,6 +176,7 @@ namespace CourtObserver
                     Util.WriteInfo(JST.Now.ToString("MM/dd hh:mm") + ": 日付が変わりました。");
 
                     CourtCalendar.Clean();
+                    await COClient.CleanAsync();
                     today = JST.Today;
                 }
 
@@ -198,6 +199,23 @@ namespace CourtObserver
                     date = today;
                     continue;
                 }
+            }
+        }
+
+        /// <summary>
+        /// 処理を実行します。
+        /// </summary>
+        public async Task RunAsync()
+        {
+            await Task.Yield();
+
+            try
+            {
+                Initialize();
+                await Loop();
+            }
+            catch (TaskCanceledException)
+            {
             }
         }
 
