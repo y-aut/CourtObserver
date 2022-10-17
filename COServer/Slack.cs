@@ -37,7 +37,7 @@ namespace COServer
                 var json = await GetAppHomeJson(user, date, calendar);
 
                 // セッション ID が変わっていれば、更新を破棄
-                if (sessionId >= 0 && sessionId != SlackEventController.GetUserAccess(user))
+                if (sessionId >= 0 && sessionId != SlackEventController.GetUserSessionId(user))
                 {
                     _logger.LogInformation("Session Discarded. Session ID: {id}", sessionId);
                     return;
@@ -139,6 +139,7 @@ namespace COServer
             var json = new StringBuilder(File.ReadAllText(
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Resources\app_home.txt")));
             json.Replace("%DATE%", date.ToApiString());
+            json.Replace("%DATE_DISP%", date.ToDisplayString());
 
             IEnumerable<int> hours;
             if (date == JST.Today)

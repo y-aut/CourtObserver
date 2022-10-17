@@ -26,6 +26,15 @@
 				},
 				"action_id": "datepicker-action"
 			}
+		},
+		{
+			"type": "context",
+			"elements": [
+				{
+					"type": "mrkdwn",
+					"text": "*%DATE_DISP%* の空き状況を表示しています。"
+				}
+			]
 		}
 		%COURTS%
 	]

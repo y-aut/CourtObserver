@@ -23,23 +23,36 @@ namespace COServer.Controllers
         private readonly ILogger<SlackEventController> _logger;
 
         /// <summary>
-        /// ユーザー毎のアクセス回数です。
+        /// ユーザー毎のセッション ID です。
         /// </summary>
-        private static readonly Dictionary<string, int> userAccesses = new();
+        private static readonly Dictionary<string, int> sessionId = new();
 
         /// <summary>
-        /// 指定したユーザーのアクセス回数を取得します。
+        /// 指定したユーザーのセッション ID を取得します。
         /// </summary>
-        public static int GetUserAccess(SlackUser user)
+        public static int GetUserSessionId(SlackUser user)
         {
-            lock (userAccesses)
+            lock (sessionId)
             {
-                if (!userAccesses.ContainsKey(user.ID))
+                if (sessionId.TryGetValue(user.ID, out var val))
                 {
-                    return 0;
+                    return val;
                 }
-                return userAccesses[user.ID];
+                return 0;
             }
+        }
+
+        /// <summary>
+        /// 指定したユーザーの新しいセッション ID を取得します。
+        /// </summary>
+        private static int GetUserNextSessionId(SlackUser user)
+        {
+            if (!sessionId.ContainsKey(user.ID))
+            {
+                sessionId.Add(user.ID, 0);
+                return 0;
+            }
+            return ++sessionId[user.ID];
         }
 
         /// <summary>
@@ -154,11 +167,12 @@ namespace COServer.Controllers
         /// </summary>
         private IActionResult AppHomeOpened(JsonDict content)
         {
-            var user = content.GetValueAsString("user");
-            if (user == null || !SlackUser.IsValidID(user))
+            var userId = content.GetValueAsString("user");
+            if (userId == null || !SlackUser.IsValidID(userId))
             {
                 return _logger.Warn(BadRequest("Illegal content."));
             }
+            var user = new SlackUser(userId);
 
             // 選択されている日付を取得
             var view = content.GetValueAsJsonDict("view");
@@ -176,7 +190,7 @@ namespace COServer.Controllers
                     date = JST.Today;
                 }
             }
-            _ = Slack.UpdateHome(new SlackUser(user), date);
+            _ = Slack.UpdateHome(user, date);
 
             _logger.LogInformation("SlackEvent app_home_opened has been handled successfully.");
             return Ok();
@@ -238,11 +252,12 @@ namespace COServer.Controllers
         private IActionResult DateChanged(JsonDict payload, JsonDict action)
         {
             // ユーザー ID を取得
-            var user = payload.GetStringFromPath("user/id");
-            if (user == null || !SlackUser.IsValidID(user))
+            var userId = payload.GetStringFromPath("user/id");
+            if (userId == null || !SlackUser.IsValidID(userId))
             {
                 return _logger.Warn(BadRequest("Illegal content."));
             }
+            var user = new SlackUser(userId);
 
             // 選択された日付を取得
             var dateString = action.GetValueAsString("selected_date");
@@ -253,7 +268,7 @@ namespace COServer.Controllers
             }
 
             // ビューを更新
-            _ = Slack.UpdateHome(new SlackUser(user), date);
+            _ = Slack.UpdateHome(user, date);
 
             _logger.LogInformation("Slack Interactive Event has been handled successfully.");
             return Ok();
@@ -265,11 +280,12 @@ namespace COServer.Controllers
         private IActionResult ButtonClicked(JsonDict payload, JsonDict action)
         {
             // ユーザー ID を取得
-            var user = payload.GetStringFromPath("user/id");
-            if (user == null || !SlackUser.IsValidID(user))
+            var userId = payload.GetStringFromPath("user/id");
+            if (userId == null || !SlackUser.IsValidID(userId))
             {
                 return _logger.Warn(BadRequest("Illegal content."));
             }
+            var user = new SlackUser(userId);
 
             // 選択された日付を取得
             var dateString = payload.GetStringFromPath("view/state/values/./datepicker-action/selected_date");
@@ -287,7 +303,9 @@ namespace COServer.Controllers
                 return _logger.Warn(BadRequest("Illegal content."));
             }
 
-            // 通知の設定を変更して、ビューを更新
+            var dateHour = new DateHour(date, hour);
+
+            // 通知の設定値を取得
             var newValue = hourString["notif_".Length] == 'f';
 
             // blocks の該当箇所だけ先に変更
@@ -325,23 +343,14 @@ namespace COServer.Controllers
             }
             var newBlock = JsonSerializer.Serialize(view["blocks"]);
 
-            int access;
-            if (userAccesses.ContainsKey(user))
-            {
-                access = ++userAccesses[user];
-            }
-            else
-            {
-                userAccesses.Add(user, 0);
-                access = 0;
-            }
             Task.Run(async () =>
             {
                 // ビューを先に更新する
-                await Slack.UpdateHome(new SlackUser(user), newBlock);
-
-                await Notif.SetUserAsync(new DateHour(date, hour), new SlackUser(user), newValue);
-                await Slack.UpdateHome(new SlackUser(user), date, access);
+                await Slack.UpdateHome(user, newBlock);
+                // 設定値をデータベースに格納する
+                await Notif.SetUserAsync(dateHour, user, newValue);
+                // ビューを更新する
+                await Slack.UpdateHome(user, date, GetUserNextSessionId(user));
             });
 
             _logger.LogInformation("Slack Interactive Event has been handled successfully.");
