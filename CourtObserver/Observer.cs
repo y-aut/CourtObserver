@@ -116,7 +116,8 @@ namespace CourtObserver
         /// <summary>
         /// 指定したコートの今後2週間の情報を表示するページまで遷移します。
         /// </summary>
-        private void Initialize()
+        /// <returns>初期化に成功したか。</returns>
+        private bool Initialize()
         {
             try
             {
@@ -148,15 +149,27 @@ namespace CourtObserver
                 var selectShisetu = new SelectElement(driver.FindElement(By.Name("lst_shisetu")));
                 selectShisetu.SelectByIndex(GetTennisCourtIndex(Court));
                 Sleep(1000);
+
+                return true;
+            }
+            catch (TaskCanceledException)
+            {
+                throw;
             }
             catch (NoSuchElementException e)
             {
+                Util.WriteInfo("要素が見つかりませんでした。ページを再度初期化します。エラーの詳細:");
                 Util.WriteInfo(e.ToString());
                 Console.WriteLine();
-                Util.WriteInfo("要素が見つかりませんでした。ページを再度初期化します。");
-                Console.WriteLine();
-                Initialize();
             }
+            catch (Exception e)
+            {
+                Util.WriteInfo("エラーが発生しました。ページを再度初期化します。エラーの詳細:");
+                Util.WriteInfo(e.ToString());
+                Console.WriteLine();
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -189,15 +202,23 @@ namespace CourtObserver
                     }
                     date = today;
                 }
+                catch (TaskCanceledException)
+                {
+                    throw;
+                }
                 catch (NoSuchElementException e)
                 {
+                    Util.WriteInfo("要素が見つかりませんでした。ページを再度初期化します。エラーの詳細:");
                     Util.WriteInfo(e.ToString());
                     Console.WriteLine();
-                    Util.WriteInfo("要素が見つかりませんでした。ページを初期化します。");
+                    return;
+                }
+                catch (Exception e)
+                {
+                    Util.WriteInfo("エラーが発生しました。ページを再度初期化します。エラーの詳細:");
+                    Util.WriteInfo(e.ToString());
                     Console.WriteLine();
-                    Initialize();
-                    date = today;
-                    continue;
+                    return;
                 }
             }
         }
@@ -211,8 +232,11 @@ namespace CourtObserver
 
             try
             {
-                Initialize();
-                await Loop();
+                while (true)
+                {
+                    while (!Initialize()) ;
+                    await Loop();
+                }
             }
             catch (TaskCanceledException)
             {
