@@ -34,38 +34,50 @@ namespace COServer
         }
 
         /// <summary>
+        /// 指定したユーザーが通知をオンにしている時間帯を取得します。
+        /// </summary>
+        public static async Task<List<DateHour>> GetDateHoursAsync(SlackUser user)
+        {
+            var list = new List<DateHour>();
+            for (int hour = Const.START_HOUR; hour < Const.END_HOUR; hour++)
+            {
+                var dates = await Firestore.GetArrayDocuments(COLLECTION_ID, hour.ToString(), user.ID);
+                list.AddRange(dates.Select(s => new DateHour(s.FromKeyString(), hour)));
+            }
+            return list;
+        }
+
+        /// <summary>
         /// 指定した時刻の通知をオンにしているユーザーのリストに user を追加します。
         /// </summary>
-        /// <returns>データを変更したかどうか。</returns>
-        public static async Task<bool> AddUserAsync(DateHour date, SlackUser user)
+        public static async Task AddUserAsync(DateHour date, SlackUser user)
         {
-            return await Firestore.AddDataAsync(COLLECTION_ID, date.Date.ToKeyString(),
+            await Firestore.AddDocument(COLLECTION_ID, date.Date.ToKeyString());
+            await Firestore.AddArrayItemAsync(COLLECTION_ID, date.Date.ToKeyString(),
                 date.Hour.ToString(), user.ID);
         }
 
         /// <summary>
         /// 指定した時刻の通知をオンにしているユーザーのリストから user を削除します。
         /// </summary>
-        /// <returns>データを変更したかどうか。</returns>
-        public static async Task<bool> RemoveUserAsync(DateHour date, SlackUser user)
+        public static async Task RemoveUserAsync(DateHour date, SlackUser user)
         {
-            return await Firestore.RemoveDataAsync(COLLECTION_ID, date.Date.ToKeyString(),
+            await Firestore.RemoveArrayItemAsync(COLLECTION_ID, date.Date.ToKeyString(),
                 date.Hour.ToString(), user.ID);
         }
 
         /// <summary>
         /// ユーザーの指定した時刻の通知を設定します。
         /// </summary>
-        /// <returns>データを変更したかどうか。</returns>
-        public static async Task<bool> SetUserAsync(DateHour date, SlackUser user, bool value)
+        public static async Task SetUserAsync(DateHour date, SlackUser user, bool value)
         {
             if (value)
             {
-                return await AddUserAsync(date, user);
+                await AddUserAsync(date, user);
             }
             else
             {
-                return await RemoveUserAsync(date, user);
+                await RemoveUserAsync(date, user);
             }
         }
 

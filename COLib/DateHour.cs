@@ -14,12 +14,17 @@
         {
             return date.ToString("yyyy-MM-dd");
         }
+
+        public static DateOnly FromKeyString(this string str)
+        {
+            return DateOnly.ParseExact(str, "yyyyMMdd");
+        }
     }
 
     /// <summary>
     /// 日付と時刻をひとまとめにした構造体です。
     /// </summary>
-    public struct DateHour
+    public struct DateHour : IEquatable<DateHour>, IComparable<DateHour>
     {
         /// <summary>
         /// 日付を表します。
@@ -87,6 +92,54 @@
             result.Hour = hour;
 
             return true;
+        }
+
+        public static bool operator ==(DateHour left, DateHour right) =>
+            left.Date == right.Date && left.Hour == right.Hour;
+        public static bool operator !=(DateHour left, DateHour right) => !(left == right);
+        public static bool operator <(DateHour left, DateHour right) =>
+            left.Date == right.Date ? (left.Hour < right.Hour) : (left.Date < right.Date);
+        public static bool operator >(DateHour left, DateHour right) =>
+            left.Date == right.Date ? (left.Hour > right.Hour) : (left.Date > right.Date);
+        public static bool operator <=(DateHour left, DateHour right) => !(left > right);
+        public static bool operator >=(DateHour left, DateHour right) => !(left < right);
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is DateHour date)
+            {
+                return Equals(date);
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public override int GetHashCode()
+        {
+            return Date.GetHashCode() ^ Hour.GetHashCode();
+        }
+
+        public bool Equals(DateHour other)
+        {
+            return this == other;
+        }
+
+        public int CompareTo(DateHour other)
+        {
+            if (this < other)
+            {
+                return -1;
+            }
+            else if (this == other)
+            {
+                return 0;
+            }
+            else
+            {
+                return 1;
+            }
         }
     }
 }

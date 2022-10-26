@@ -97,10 +97,18 @@ namespace COLib
         private static readonly List<string> dayOfWeekString = new List<string>()
             { "日", "月", "火", "水", "木", "金", "土" };
 
+        private static readonly List<string> dayOfWeekShortEnglish = new List<string>()
+            { "sun", "mon", "tue", "wed", "thu", "fri", "sat" };
+
         /// <summary>
         /// 日曜日から始まる日本語の曜日の配列です。
         /// </summary>
         public static List<string> DayOfWeekString => dayOfWeekString;
+
+        /// <summary>
+        /// 日曜日から始まる英語略記の小文字の曜日の配列です。
+        /// </summary>
+        public static List<string> DayOfWeekShortEnglish => dayOfWeekShortEnglish;
 
         /// <summary>
         /// 日付を表示用の文字列に変換します。
@@ -108,6 +116,14 @@ namespace COLib
         public static string ToDisplayString(this DateOnly date)
         {
             return $"{date.Month}月{date.Day}日（{DayOfWeekString[(int)date.DayOfWeek]}）";
+        }
+
+        /// <summary>
+        /// 日付を年号ありの表示用の文字列に変換します。
+        /// </summary>
+        public static string ToDisplayLongString(this DateOnly date)
+        {
+            return $"{date.Year}年{date.Month}月{date.Day}日（{DayOfWeekString[(int)date.DayOfWeek]}）";
         }
 
         /// <summary>

@@ -1,4 +1,5 @@
 ﻿using COLib;
+using COServer.Commands;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
@@ -7,6 +8,7 @@ using System.Text.Json;
 namespace COServer.Controllers
 {
     using JsonDict = Dictionary<string, JsonElement>;
+    using StringDict = Dictionary<string, string>;
 
     /// <summary>
     /// Slack App の操作時に発生するイベントを扱います。
@@ -72,6 +74,8 @@ namespace COServer.Controllers
         {
             try
             {
+                _logger.LogInformation("Slack event received: {payload}", JsonSerializer.Serialize(payload));
+
                 if (payload == null)
                 {
                     return _logger.Warn(BadRequest("This content cannnot be resolved."));
@@ -115,6 +119,27 @@ namespace COServer.Controllers
         {
             var token = content.GetValueAsString("token");
             if (token == null)
+            {
+                result = _logger.Warn(BadRequest("Illegal content."));
+                return false;
+            }
+
+            if (token != VERIFICATION_TOKEN)
+            {
+                result = _logger.Warn(Unauthorized("Invalid token."));
+                return false;
+            }
+
+            result = Ok();
+            return true;
+        }
+
+        /// <summary>
+        /// トークン認証を行います。
+        /// </summary>
+        private bool VerifyToken(StringDict content, out IActionResult result)
+        {
+            if (!content.TryGetValue("token", out var token))
             {
                 result = _logger.Warn(BadRequest("Illegal content."));
                 return false;
@@ -202,11 +227,12 @@ namespace COServer.Controllers
         /// <param name="payload">イベント API の本文です。</param>
         [HttpPost("Interactive")]
         [Consumes("application/x-www-form-urlencoded")]
-        public IActionResult PostInteractive([FromForm] string payload)
+        public IActionResult PostInteractive([FromForm(Name = "payload")] string payload)
         {
-            // urlencoded のときは payload の名前を変更してはならない
             try
             {
+                _logger.LogInformation("Slack interactive received: {payload}", payload);
+
                 var dict = JsonSerializer.Deserialize<JsonDict>(payload);
                 if (dict == null)
                 {
@@ -355,6 +381,85 @@ namespace COServer.Controllers
 
             _logger.LogInformation("Slack Interactive Event has been handled successfully.");
             return Ok();
+        }
+
+        /// <summary>
+        /// Slack スラッシュコマンドのイベント処理を行います。
+        /// </summary>
+        /// <param name="payload">イベント API の本文です。</param>
+        [HttpPost("Command")]
+        [Consumes("application/x-www-form-urlencoded")]
+        public IActionResult PostCommand([FromForm] StringDict payload)
+        {
+            try
+            {
+                _logger.LogInformation("Slack interactive received: {payload}",
+                    JsonSerializer.Serialize(payload));
+
+                if (payload == null)
+                {
+                    return _logger.Warn(BadRequest("This content cannnot be resolved."));
+                }
+
+                // トークン認証
+                if (!VerifyToken(payload, out var result))
+                {
+                    return result;
+                }
+
+                // コマンド名
+                if (!payload.TryGetValue("command", out var command))
+                {
+                    return _logger.Warn(BadRequest("The content must have an \"command\" string."));
+                }
+
+                // パラメータ
+                if (!payload.TryGetValue("text", out var text))
+                {
+                    return _logger.Warn(BadRequest("The content must have an \"text\" string."));
+                }
+
+                // ユーザー ID
+                if (!payload.TryGetValue("user_id", out var userId))
+                {
+                    return _logger.Warn(BadRequest("The content must have an \"user_id\" string."));
+                }
+                var user = new SlackUser(userId);
+
+                // レスポンス URL
+                if (!payload.TryGetValue("response_url", out var urlStr))
+                {
+                    return _logger.Warn(BadRequest("The content must have an \"response_url\" string."));
+                }
+                var url = new Uri(urlStr);
+
+                return command switch
+                {
+                    "/debug" => ExecuteCommand(new DebugCommand(text, user, url)),
+                    "/alert" => ExecuteCommand(new AlertCommand(text, user, url)),
+                    "/showalert" => ExecuteCommand(new ShowAlertCommand(text, user, url)),
+                    _ => _logger.Warn(BadRequest($"Invalid command: {command}")),
+                };
+            }
+            catch (Exception e)
+            {
+                _logger.Warn(e);
+                return new ContentResult()
+                {
+                    StatusCode = 500,
+                    Content = e.ToString(),
+                    ContentType = "text/plain",
+                };
+            }
+        }
+
+        /// <summary>
+        /// コマンドの処理を実行します。
+        /// </summary>
+        private IActionResult ExecuteCommand(SlackCommand command)
+        {
+            command.Execute(out var message);
+            return Ok(message);
         }
     }
 }

@@ -9,7 +9,7 @@ namespace COLib
     public struct SlackUser
     {
         /// <summary>
-        /// ユーザー ID です。10桁の半角英数字で表されます。
+        /// ユーザー ID です。10桁前後の半角英数字で表されます。
         /// </summary>
         [JsonPropertyName("id")]
         public string ID { get; set; }

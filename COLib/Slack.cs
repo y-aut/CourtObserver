@@ -1,6 +1,7 @@
-﻿using COLib;
+﻿using System.Text;
+using System.Text.Json;
 
-namespace CourtObserver
+namespace COLib
 {
     public static class Slack
     {
@@ -105,6 +106,21 @@ namespace CourtObserver
         {
             await SendTextAsync(text);
             await UploadFileAsync(path);
+        }
+
+        /// <summary>
+        /// Webhook URL を使用してテキストを送信します。
+        /// </summary>
+        /// <param name="text">送信するテキスト。</param>
+        public static async Task SendWebhookAsync(string text, Uri url)
+        {
+            var payload = new Dictionary<string, string> { { "text", text } };
+            var json = JsonSerializer.Serialize(payload);
+
+            using var client = new HttpClient();
+            using var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var result = await client.PostAsync(url, content);
+            Console.WriteLine(result);
         }
     }
 }

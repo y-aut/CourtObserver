@@ -98,7 +98,8 @@ namespace COServer.Controllers
             }
             try
             {
-                return Ok(await Notif.AddUserAsync(dateHour, new SlackUser(user)));
+                await Notif.AddUserAsync(dateHour, new SlackUser(user));
+                return Ok();
             }
             catch (Exception e)
             {
@@ -131,7 +132,8 @@ namespace COServer.Controllers
             }
             try
             {
-                return Ok(await Notif.RemoveUserAsync(dateHour, new SlackUser(user)));
+                await Notif.RemoveUserAsync(dateHour, new SlackUser(user));
+                return Ok();
             }
             catch (Exception e)
             {

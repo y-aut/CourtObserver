@@ -62,6 +62,7 @@ namespace CourtObserver
             }
             driver.Quit();
             driver.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>
@@ -69,15 +70,12 @@ namespace CourtObserver
         /// </summary>
         private static (int, int) GetLocationValue(Court court)
         {
-            switch (court)
+            return court switch
             {
-                case Court.Takara:
-                    return (100045, 26103);
-                case Court.Okazaki:
-                    return (100047, 26103);
-                default:
-                    return (0, 0);
-            }
+                Court.Takara => (100045, 26103),
+                Court.Okazaki => (100047, 26103),
+                _ => (0, 0),
+            };
         }
 
         /// <summary>
@@ -85,14 +83,11 @@ namespace CourtObserver
         /// </summary>
         private static int GetTennisCourtIndex(Court court)
         {
-            switch (court)
+            return court switch
             {
-                case Court.Takara:
-                case Court.Okazaki:
-                    return 1;
-                default:
-                    return 0;
-            }
+                Court.Takara or Court.Okazaki => 1,
+                _ => 0,
+            };
         }
 
         /// <summary>
