@@ -134,7 +134,6 @@ namespace CourtObserver
                         continue;
                     }
                     await COClient.UpdateCourtAsync(date, e.Court, val.Value);
-                    Sleep(100);
                 }
             }
             catch (Exception ex)

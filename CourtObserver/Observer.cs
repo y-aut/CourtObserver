@@ -356,15 +356,30 @@ namespace CourtObserver
         /// </summary>
         private static CourtState ParseCourtState(string str)
         {
-            return str switch
+            if (str == "予約可能")
             {
-                "予約可能" => CourtState.Empty,
-                "予約不可" => CourtState.Reserved,
-                "予約受付期間外" => CourtState.OutOfDate,
-                "抽選予約可能" => CourtState.Lottery,
-                "休館・点検" => CourtState.Closed,
-                _ => CourtState.Unknown,
-            };
+                return CourtState.Empty;
+            }
+            else if (str == "予約不可")
+            {
+                return CourtState.Reserved;
+            }
+            else if (str.Contains("期間外"))
+            {
+                return CourtState.OutOfDate;
+            }
+            else if (str.Contains("抽選"))
+            {
+                return CourtState.Lottery;
+            }
+            else if (str.Contains('休'))
+            {
+                return CourtState.Closed;
+            }
+            else
+            {
+                return CourtState.Unknown;
+            }
         }
 
         /// <summary>
